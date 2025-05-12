@@ -20,6 +20,10 @@ public class EmployeeBean implements Serializable{
 		this.role = role;
 	}
 
+	public EmployeeBean() {
+		// TODO 自動生成されたコンストラクター・スタブ
+	}
+
 	public String getEmpid() {
 		return empid;
 	}

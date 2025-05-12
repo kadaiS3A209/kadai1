@@ -4,6 +4,9 @@ import java.io.Serializable;
 
 public class MedicineBean implements Serializable{
 	private  String medicineid,medicinename,unit;
+	
+	
+	public MedicineBean() {}
 
 	public MedicineBean(String medicineid, String medicinename, String unit) {
 		super();
