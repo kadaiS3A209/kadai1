@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="com.example.model.EmployeeBean" %> <%-- EmployeeBeanのパスに合わせて変更 --%>
+<%@ page import="model.EmployeeBean" %> <%-- EmployeeBeanのパスに合わせて変更 --%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -33,11 +33,13 @@
 
         // ロールの表示名を決定 (例)
         String roleName = "";
-        if (employee.getEmpRole() == 1) {
+        if (employee.getRole() == 1) {
             roleName = "受付";
-        } else if (employee.getEmpRole() == 2) {
+        } else if (employee.getRole() == 2) {
             roleName = "医師";
-        } else {
+        } else if (employee.getRole() == 3 ){
+        	roleName = "管理者";
+        }else {
             roleName = "不明なロール"; // エラーケース
         }
     %>
@@ -46,19 +48,19 @@
 
     <div class="confirm-item">
         <span class="label">従業員ID:</span>
-        <span class="value"><%= employee.getEmpId() %></span> <%-- 自動生成されたID --%>
+        <span class="value"><%= employee.getEmpid() %></span> <%-- 自動生成されたID --%>
     </div>
     <div class="confirm-item">
         <span class="label">姓:</span>
-        <span class="value"><%= employee.getEmpLname() %></span>
+        <span class="value"><%= employee.getEmplname() %></span>
     </div>
     <div class="confirm-item">
         <span class="label">名:</span>
-        <span class="value"><%= employee.getEmpFname() %></span>
+        <span class="value"><%= employee.getEmpfname() %></span>
     </div>
     <div class="confirm-item">
         <span class="label">ロール:</span>
-        <span class="value"><%= roleName %> (<%= employee.getEmpRole() %>)</span>
+        <span class="value"><%= roleName %> (<%= employee.getRole() %>)</span>
     </div>
     <div class="confirm-item">
         <span class="label">パスワード:</span>

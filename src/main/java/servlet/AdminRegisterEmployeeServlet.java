@@ -68,7 +68,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                 request.setAttribute("formError", "入力内容に誤りがあります。");
                 // 入力値をリクエスト属性に再設定してフォームに戻す（またはセッションを使う）
                 // 簡単な例としてエラーメッセージのみ設定
-                 request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
 
@@ -80,9 +80,11 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                 rolePrefix = "RC";
             } else if (role == 2) { // 医師
                 rolePrefix = "DR";
-            } else {
+            } else if (role == 3){
+            	rolePrefix = "MG";
+            } else{
                  request.setAttribute("formError", "無効なロールです。");
-                 request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
 
@@ -97,7 +99,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                     // ID形式が不正な場合のエラーハンドリング (通常は起こらないはず)
                     e.printStackTrace(); // ログ記録
                      request.setAttribute("formError", "従業員IDの生成に失敗しました。");
-                     request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                     request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                     return;
                 }
             }
@@ -117,7 +119,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             session.setAttribute("tempEmployee", tempEmployee);
 
             // 確認画面へフォワード
-            request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_confirm.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_confirm.jsp").forward(request, response);
 
         } else if ("register".equals(action)) {
             // --- 確認画面からの登録実行処理 ---
@@ -126,7 +128,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             if (employeeToRegister == null) {
                 // セッション切れなどのエラー
                 request.setAttribute("formError", "セッション情報が見つかりません。最初からやり直してください。");
-                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
 
@@ -160,7 +162,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                 } else {
                     // 登録失敗 (例: DBエラー)
                     request.setAttribute("formError", "データベースへの登録に失敗しました。");
-                    request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 }
 
             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -168,13 +170,13 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                  e.printStackTrace(); // ログ記録
                  session.removeAttribute("tempEmployee"); // セッションクリア
                  request.setAttribute("formError", "パスワード処理中にエラーが発生しました。");
-                 request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
             } catch (Exception e) {
                  // その他の予期せぬ例外
                  e.printStackTrace();
                  session.removeAttribute("tempEmployee");
                  request.setAttribute("formError", "予期せぬエラーが発生しました。");
-                 request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
             }
         } else {
             // actionパラメータがない、または不正な場合

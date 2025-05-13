@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="model.EmployeeBean" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -33,9 +34,9 @@
         }
         // 確認画面から戻ってきた場合の値を取得
         EmployeeBean prevInput = (EmployeeBean) session.getAttribute("tempEmployee");
-        String prevLname = (prevInput != null && prevInput.getEmpLname() != null) ? prevInput.getEmpLname() : "";
-        String prevFname = (prevInput != null && prevInput.getEmpFname() != null) ? prevInput.getEmpFname() : "";
-        String prevRole = (prevInput != null && prevInput.getEmpRole() != 0) ? String.valueOf(prevInput.getEmpRole()) : "";
+        String prevLname = (prevInput != null && prevInput.getEmplname() != null) ? prevInput.getEmplname() : "";
+        String prevFname = (prevInput != null && prevInput.getEmpfname() != null) ? prevInput.getEmpfname() : "";
+        String prevRole = (prevInput != null && prevInput.getRole() != 0) ? String.valueOf(prevInput.getRole()) : "";
         // パスワードは再入力させる
     %>
 
@@ -62,6 +63,7 @@
                 <%-- valueはDBのemproleに保存する整数値に合わせる --%>
                 <option value="1" <%= "1".equals(prevRole) ? "selected" : "" %>>受付</option>
                 <option value="2" <%= "2".equals(prevRole) ? "selected" : "" %>>医師</option>
+                <option value="3" <%= "3".equals(prevRole) ? "selected" : "" %>>管理者</option>
                 <%-- 他のロールがあれば追加 --%>
             </select>
             <span id="roleError" class="error-message">ロールを選択してください。</span>

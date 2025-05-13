@@ -14,7 +14,7 @@ public class EmployeeDAO {
     public boolean registerEmployee(EmployeeBean emp) {
         Connection conn = null;
         PreparedStatement ps = null;
-        String sql = "INSERT INTO employee (empid,empfname,emplname,emppasswd,empsalt,emprole)VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO employee (empid,empfname,emplname,emppasswd,salt,emprole)VALUES (?, ?, ?, ?, ?, ?)";
         boolean result = false;
 
         try {
