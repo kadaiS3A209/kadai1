@@ -48,7 +48,7 @@
 
     <div class="confirm-item">
         <span class="label">従業員ID:</span>
-        <span class="value"><%= employee.getEmpid() %></span> <%-- 自動生成されたID --%>
+        <span class="value"><%= employee.getEmpid() %></span> <%-- ユーザーが入力したID --%>
     </div>
     <div class="confirm-item">
         <span class="label">姓:</span>

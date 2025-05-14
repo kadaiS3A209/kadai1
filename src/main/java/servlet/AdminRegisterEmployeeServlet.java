@@ -52,6 +52,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 
         if ("confirm".equals(action)) {
             // --- 入力画面からの確認処理 ---
+        	String empid = request.getParameter("empid");
             String lname = request.getParameter("emplname");
             String fname = request.getParameter("empfname");
             String roleStr = request.getParameter("emprole");
@@ -74,43 +75,45 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 
             int role = Integer.parseInt(roleStr);
 
-            // --- 従業員IDの自動生成 ---
-            String rolePrefix = "";
-            if (role == 1) { // 受付
-                rolePrefix = "RC";
-            } else if (role == 2) { // 医師
-                rolePrefix = "DR";
-            } else if (role == 3){
-            	rolePrefix = "MG";
-            } else{
-                 request.setAttribute("formError", "無効なロールです。");
-                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
-                return;
-            }
-
-            EmployeeDAO dao = new EmployeeDAO(); // DAOのインスタンス化 (実際には依存性注入などを検討)
-            String lastId = dao.findLastEmployeeIdForRole(rolePrefix);
-            int nextSeq = 1;
-            if (lastId != null && lastId.length() == 8) {
-                try {
-                    // "RC000015" の "000015" 部分を取得して数値に変換
-                    nextSeq = Integer.parseInt(lastId.substring(2)) + 1;
-                } catch (NumberFormatException e) {
-                    // ID形式が不正な場合のエラーハンドリング (通常は起こらないはず)
-                    e.printStackTrace(); // ログ記録
-                     request.setAttribute("formError", "従業員IDの生成に失敗しました。");
-                     request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
-                    return;
-                }
-            }
-            // 6桁のゼロ埋め文字列を生成 ("000001", "000016" など)
-            String newSeqStr = String.format("%06d", nextSeq);
-            String newEmpId = rolePrefix + newSeqStr;
-            // --- ID生成完了 ---
-
+			/*            // --- 従業員IDの自動生成 ---
+			String rolePrefix = "";
+			if (role == 1) { // 受付
+			    rolePrefix = "RC";
+			} else if (role == 2) { // 医師
+			    rolePrefix = "DR";
+			} else if (role == 3){
+				rolePrefix = "MG";
+			} else{
+			     request.setAttribute("formError", "無効なロールです。");
+			     request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+			    return;
+			}
+			
+			EmployeeDAO dao = new EmployeeDAO(); // DAOのインスタンス化 (実際には依存性注入などを検討)
+			String lastId = dao.findLastEmployeeIdForRole(rolePrefix);
+			int nextSeq = 1;
+			if (lastId != null && lastId.length() == 8) {
+			    try {
+			        // "RC000015" の "000015" 部分を取得して数値に変換
+			        nextSeq = Integer.parseInt(lastId.substring(2)) + 1;
+			    } catch (NumberFormatException e) {
+			        // ID形式が不正な場合のエラーハンドリング (通常は起こらないはず)
+			        e.printStackTrace(); // ログ記録
+			         request.setAttribute("formError", "従業員IDの生成に失敗しました。");
+			         request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+			        return;
+			    }
+			}
+			// 6桁のゼロ埋め文字列を生成 ("000001", "000016" など)
+			String newSeqStr = String.format("%06d", nextSeq);
+			String newEmpId = rolePrefix + newSeqStr;
+			// --- ID生成完了 ---
+			*/
+            
+            
             // EmployeeBeanに情報を詰めてセッションに保存 (パスワードはまだ生)
             EmployeeBean tempEmployee = new EmployeeBean();
-            tempEmployee.setEmpid(newEmpId);
+            tempEmployee.setEmpid(empid);
             tempEmployee.setEmplname(lname);
             tempEmployee.setEmpfname(fname);
             tempEmployee.setRole(role);
@@ -158,7 +161,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 
                 if (success) {
                     // 登録成功ページへリダイレクト (PRGパターン)
-                    response.sendRedirect("admin_register_complete.jsp"); // 成功画面を作成
+                    response.sendRedirect("/WEB-INF/jsp/E100/admin_register_complete.jsp"); // 成功画面を作成
                 } else {
                     // 登録失敗 (例: DBエラー)
                     request.setAttribute("formError", "データベースへの登録に失敗しました。");
