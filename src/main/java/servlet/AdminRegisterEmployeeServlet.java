@@ -58,6 +58,34 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             String roleStr = request.getParameter("emprole");
             String password = request.getParameter("password");
             String passwordConfirm = request.getParameter("passwordConfirm");
+            
+            // --- サーバーサイドバリデーション (empid) ---
+            if (empid == null || empid.trim().isEmpty()){
+            	request.setAttribute("formError", "従業員IDを入力してください。");
+            	setFormValuesBackToRequest(request, empid, lname, fname, roleStr);
+            	request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                return;
+
+            }else if(empid.trim().length()>8) {
+            	request.setAttribute("formError", "従業員IDは8桁以下で入力してください。");
+                setFormValuesBackToRequest(request, empid, lname, fname, roleStr);
+                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                return;
+
+            }
+            
+         // --- 従業員IDの重複チェック ---
+            EmployeeDAO dao = new EmployeeDAO(); // DAOのインスタンス化
+            if (dao.isEmpidExists(empid.trim())) {
+                request.setAttribute("formError", "入力された従業員IDは既に使用されています。");
+                setFormValuesBackToRequest(request, empid, lname, fname, roleStr); // 入力値を戻す
+                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                return;
+            }
+            // --- 重複チェック完了 ---
+
+            
+            
 
             // 簡単なサーバーサイドバリデーション (クライアント側チェックに加えて)
             if (lname == null || lname.trim().isEmpty() ||
@@ -75,40 +103,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 
             int role = Integer.parseInt(roleStr);
 
-			/*            // --- 従業員IDの自動生成 ---
-			String rolePrefix = "";
-			if (role == 1) { // 受付
-			    rolePrefix = "RC";
-			} else if (role == 2) { // 医師
-			    rolePrefix = "DR";
-			} else if (role == 3){
-				rolePrefix = "MG";
-			} else{
-			     request.setAttribute("formError", "無効なロールです。");
-			     request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
-			    return;
-			}
-			
-			EmployeeDAO dao = new EmployeeDAO(); // DAOのインスタンス化 (実際には依存性注入などを検討)
-			String lastId = dao.findLastEmployeeIdForRole(rolePrefix);
-			int nextSeq = 1;
-			if (lastId != null && lastId.length() == 8) {
-			    try {
-			        // "RC000015" の "000015" 部分を取得して数値に変換
-			        nextSeq = Integer.parseInt(lastId.substring(2)) + 1;
-			    } catch (NumberFormatException e) {
-			        // ID形式が不正な場合のエラーハンドリング (通常は起こらないはず)
-			        e.printStackTrace(); // ログ記録
-			         request.setAttribute("formError", "従業員IDの生成に失敗しました。");
-			         request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
-			        return;
-			    }
-			}
-			// 6桁のゼロ埋め文字列を生成 ("000001", "000016" など)
-			String newSeqStr = String.format("%06d", nextSeq);
-			String newEmpId = rolePrefix + newSeqStr;
-			// --- ID生成完了 ---
-			*/
+
             
             
             // EmployeeBeanに情報を詰めてセッションに保存 (パスワードはまだ生)
@@ -187,5 +182,15 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
         }
     
 	}
+	
+	
+	private void setFormValuesBackToRequest(final HttpServletRequest request, final String empId, final String lname, final String fname, final String roleStr) {
+	    request.setAttribute("prevEmpId", empId); // prevInputのBeanを使う方が一貫性がある
+	    request.setAttribute("prevLname", lname);
+	    request.setAttribute("prevFname", fname);
+	    request.setAttribute("prevRole", roleStr);
+	    // EmployeeBeanをセッションではなくリクエスト属性で回す場合は、ここでBeanを生成してセット
+	}
+
 
 }

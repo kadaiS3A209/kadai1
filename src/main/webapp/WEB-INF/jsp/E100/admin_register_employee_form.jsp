@@ -48,7 +48,7 @@
         <div class="form-group">
         	<label for="empid">ID</label>
         	<input type="text" id="empid" name="empid"  value="<%= prevId %>" required maxlength="8">
-        	<span id="empidError" class="error-message">従業員IDを8桁以内で入力してください</span>
+        	<span id="empidError" class="error-message">従業員IDを入力してください</span>
         </div>
 
         <div class="form-group">
@@ -112,7 +112,7 @@
     lnameInput.onblur = () => validateField(lnameInput, lnameError, "姓を入力してください。");
     fnameInput.onblur = () => validateField(fnameInput, fnameError, "名を入力してください。");
     roleSelect.onblur = () => validateField(roleSelect, roleError, "ロールを選択してください。");
-    empidInput.onblur = () => validateEmpId(); //形式チェックも行うなら
+    empidInput.onblur = () => validateEmpId(empidInput, empidError,"従業員IDを入力してください"); //形式チェックも行うなら
     passwordInput.onblur = () => {
         validateField(passwordInput, passwordError, "パスワードを入力してください。");
         validatePasswordConfirm(); // パスワード入力が変わったら確認欄も再チェック
@@ -132,23 +132,19 @@
     }
 
     function validateEmpId(){
-		const empidValue = empidInput.value.trim();
-		if(!empidValue){
+		//const empidValue = ;
+		if(!empidInput.value.trim()){
 			empidError.textContent = "従業員IDを入力してください";
 			empidError.style.display = 'block';
 			return false;
 
-		}else if(empidValue.length <= 8){
-			empidError.textContet = "従業員IDを８桁以内で入力してください";
-			empidError.style.display = 'block';
-			return false;
 		}//ここにさらにelse if で詳細な形式チェックを追加可能
 		else{
 			empidError.style.display = 'none';
 			return true;
 		}
 
-     }
+     } 
 
     function validatePasswordConfirm() {
         if (passwordInput.value !== passwordConfirmInput.value) {
@@ -169,7 +165,7 @@
     // フォーム送信時の最終チェック
     function validateForm() {
         let isValid = true;
-        isValid &= validateEmpId();//empidのバリデーションを追加
+        isValid &= validateEmpId(empidInput, empidError,"従業員IDを入力してください");//empidのバリデーションを追加
         isValid &= validateField(lnameInput, lnameError, "姓を入力してください。");
         isValid &= validateField(fnameInput, fnameError, "名を入力してください。");
         isValid &= validateField(roleSelect, roleError, "ロールを選択してください。");
