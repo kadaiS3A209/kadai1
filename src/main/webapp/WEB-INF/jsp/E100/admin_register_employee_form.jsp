@@ -34,15 +34,13 @@
         }
         // 確認画面から戻ってきた場合の値を取得
         EmployeeBean prevInput = (EmployeeBean) session.getAttribute("tempEmployee");
-        if(prevInput != null){
+        
         String prevLname = (prevInput != null && prevInput.getEmplname() != null) ? prevInput.getEmplname() : "";
         String prevFname = (prevInput != null && prevInput.getEmpfname() != null) ? prevInput.getEmpfname() : "";
         String prevRole = (prevInput != null && prevInput.getRole() != 0) ? String.valueOf(prevInput.getRole()) : "";
         String prevEmpId = (prevInput != null && prevInput.getEmpid() != null) ? prevInput.getEmpid() : "";
      	// パスワードは再入力させる
-        }else{
-        	String prevLname = (String)request.getAttribute("prevLname")
-        }
+        
     %>
 
     <form id="registerForm" action="AdminRegisterEmployeeServlet" method="post" onsubmit="return validateForm()">
