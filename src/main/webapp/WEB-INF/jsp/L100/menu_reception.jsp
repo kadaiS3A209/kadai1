@@ -4,9 +4,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>受付用メニュー</title>
 </head>
 <body>
-
+<p>患者の検索</p>
+<p>患者登録機能</p>
+<p>患者情報変更機能</p>
+<p>パスワードの変更</p>
 </body>
 </html>

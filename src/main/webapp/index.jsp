@@ -13,6 +13,7 @@
 
 <p>パスワード：<input type="text"></p>
 
+<input type = "submit" value="Login">
 </form>
 
 

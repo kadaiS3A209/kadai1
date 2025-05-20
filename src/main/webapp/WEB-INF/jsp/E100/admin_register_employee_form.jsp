@@ -34,11 +34,15 @@
         }
         // 確認画面から戻ってきた場合の値を取得
         EmployeeBean prevInput = (EmployeeBean) session.getAttribute("tempEmployee");
+        if(prevInput != null){
         String prevLname = (prevInput != null && prevInput.getEmplname() != null) ? prevInput.getEmplname() : "";
         String prevFname = (prevInput != null && prevInput.getEmpfname() != null) ? prevInput.getEmpfname() : "";
         String prevRole = (prevInput != null && prevInput.getRole() != 0) ? String.valueOf(prevInput.getRole()) : "";
-        String prevId = (prevInput != null && prevInput.getEmpid() != null) ? prevInput.getEmpid() : "";
-        // パスワードは再入力させる
+        String prevEmpId = (prevInput != null && prevInput.getEmpid() != null) ? prevInput.getEmpid() : "";
+     	// パスワードは再入力させる
+        }else{
+        	String prevLname = (String)request.getAttribute("prevLname")
+        }
     %>
 
     <form id="registerForm" action="AdminRegisterEmployeeServlet" method="post" onsubmit="return validateForm()">
@@ -47,19 +51,19 @@
         
         <div class="form-group">
         	<label for="empid">ID</label>
-        	<input type="text" id="empid" name="empid"  value="<%= prevId %>" required maxlength="8">
+        	<input type="text" id="empid" name="empid"  value="<%=(String)request.getAttribute("prevEmpId") != null ? (String)request.getAttribute("prevEmpId"): prevEmpId %>" required maxlength="8">
         	<span id="empidError" class="error-message">従業員IDを入力してください</span>
         </div>
 
         <div class="form-group">
             <label for="emplname">姓:</label>
-            <input type="text" id="emplname" name="emplname" value="<%= prevLname %>" required>
+            <input type="text" id="emplname" name="emplname" value="<%=(String)request.getAttribute("prevLname") != null ? (String)request.getAttribute("prevLname"): prevLname %>" required>
             <span id="lnameError" class="error-message">姓を入力してください。</span>
         </div>
 
         <div class="form-group">
             <label for="empfname">名:</label>
-            <input type="text" id="empfname" name="empfname" value="<%= prevFname %>" required>
+            <input type="text" id="empfname" name="empfname" value="<%=(String)request.getAttribute("prevFname") != null ? (String)request.getAttribute("prevFname"): prevFname %>" required>
             <span id="fnameError" class="error-message">名を入力してください。</span>
         </div>
 

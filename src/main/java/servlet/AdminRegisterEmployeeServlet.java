@@ -63,13 +63,13 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             if (empid == null || empid.trim().isEmpty()){
             	request.setAttribute("formError", "従業員IDを入力してください。");
             	setFormValuesBackToRequest(request, empid, lname, fname, roleStr);
-            	request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+            	request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 return;
 
             }else if(empid.trim().length()>8) {
             	request.setAttribute("formError", "従業員IDは8桁以下で入力してください。");
                 setFormValuesBackToRequest(request, empid, lname, fname, roleStr);
-                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 return;
 
             }
@@ -79,7 +79,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             if (dao.isEmpidExists(empid.trim())) {
                 request.setAttribute("formError", "入力された従業員IDは既に使用されています。");
                 setFormValuesBackToRequest(request, empid, lname, fname, roleStr); // 入力値を戻す
-                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
             // --- 重複チェック完了 ---
@@ -97,6 +97,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                 request.setAttribute("formError", "入力内容に誤りがあります。");
                 // 入力値をリクエスト属性に再設定してフォームに戻す（またはセッションを使う）
                 // 簡単な例としてエラーメッセージのみ設定
+                
                  request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
@@ -184,11 +185,11 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 	}
 	
 	
-	private void setFormValuesBackToRequest(final HttpServletRequest request, final String empId, final String lname, final String fname, final String roleStr) {
+	private void setFormValuesBackToRequest(HttpServletRequest request, String empId, String lname, String fname,  String roleStr) {
 	    request.setAttribute("prevEmpId", empId); // prevInputのBeanを使う方が一貫性がある
 	    request.setAttribute("prevLname", lname);
 	    request.setAttribute("prevFname", fname);
-	    request.setAttribute("prevRole", roleStr);
+	    request.setAttribute("prevRoleStr", roleStr);
 	    // EmployeeBeanをセッションではなくリクエスト属性で回す場合は、ここでBeanを生成してセット
 	}
 

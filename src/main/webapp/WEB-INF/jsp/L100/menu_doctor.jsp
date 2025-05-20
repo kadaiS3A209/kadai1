@@ -4,9 +4,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>医師用メニュー</title>
 </head>
 <body>
+<p>患者の検索</p>
+<p>薬投与の指示</p>
+<p>処置確定</p>
+<p></p>
 
 </body>
 </html>

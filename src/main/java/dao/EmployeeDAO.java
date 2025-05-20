@@ -77,13 +77,14 @@ public class EmployeeDAO {
     public boolean isEmpidExists(String empid) {
     	Connection conn = null;
         PreparedStatement ps = null;
-    	String sql = "select count(*) from employee where enpid = ?";
+        ResultSet rs = null;
+    	String sql = "select count(*) from employee where empid = ?";
     	boolean exists = false;
     	try {
     		conn = DBManager.getConnection();
     		ps = conn.prepareStatement(sql);
     		ps.setString(1, empid);
-    		ResultSet rs = ps.executeQuery();
+    		rs = ps.executeQuery();
     		
     		if(rs.next()) {
     			if(rs.getInt(1)>0) {
@@ -95,9 +96,17 @@ public class EmployeeDAO {
         	e.printStackTrace();
         	return false;
         }finally {
-        	DBManager.close(conn, ps);
+        	DBManager.close(conn, ps, rs);
         }
     	return exists;
+    }
+    
+    public int checkUser(String empid) {
+    	Connection conn = null;
+        PreparedStatement ps = null;
+        String sql = "select role";
+        int a = 0;
+        return 0;
     }
 
     
