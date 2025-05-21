@@ -157,7 +157,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 
                 if (success) {
                     // 登録成功ページへリダイレクト (PRGパターン)
-                    response.sendRedirect("/WEB-INF/jsp/E100/admin_register_complete.jsp"); // 成功画面を作成
+                    request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_complete.jsp").forward(request, response); // 成功画面を作成
                 } else {
                     // 登録失敗 (例: DBエラー)
                     request.setAttribute("formError", "データベースへの登録に失敗しました。");

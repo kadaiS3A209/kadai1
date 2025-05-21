@@ -101,13 +101,45 @@ public class EmployeeDAO {
     	return exists;
     }
     
-    public int checkUser(String empid) {
-    	Connection conn = null;
+    
+    public EmployeeBean getEmployeeById(String empId) {
+        EmployeeBean employee = null;
+        Connection con = null;
         PreparedStatement ps = null;
-        String sql = "select role";
-        int a = 0;
-        return 0;
+        ResultSet rs = null;
+
+        //[span_1](start_span)// SQLクエリ: employee テーブルから指定された empid のレコードを取得[span_1](end_span)
+        String sql = "SELECT empid, empfname, emplname, emppasswd, salt, emprole FROM employee WHERE empid = ?"; //[span_2](start_span)//[span_2](end_span)
+
+        try {
+            // データベースへの接続 (実際にはコネクションプーリングなどを検討)
+            // Class.forName("com.mysql.cj.jdbc.Driver"); // JDBCドライバのロード (古い方法、不要な場合も)
+            con = DBManager.getConnection();
+
+            ps = con.prepareStatement(sql);
+            ps.setString(1, empId);
+
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                employee = new EmployeeBean();
+                employee.setEmpid(rs.getString("empid")); //[span_3](start_span)//[span_3](end_span)
+                employee.setEmpfname(rs.getString("empfname")); //[span_4](start_span)//[span_4](end_span)
+                employee.setEmplname(rs.getString("emplname")); //[span_5](start_span)//[span_5](end_span)
+                employee.setEmppasswd(rs.getString("emppasswd")); //[span_6](start_span)//[span_6](end_span)
+                employee.setSalt(rs.getString("salt")); //[span_7](start_span)//[span_7](end_span)
+                employee.setRole(rs.getInt("emprole")); //[span_8](start_span)//[span_8](end_span)
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // 実際にはより適切なエラーハンドリングを行う
+            // 例: throw new RuntimeException("Database error fetching employee by ID", e);
+        } finally {
+            // リソースの解放
+        	DBManager.close(con, ps, rs);
+        }
+        return employee; // 見つからなければ employee は null のまま返される
     }
+
 
     
     
