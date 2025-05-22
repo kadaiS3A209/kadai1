@@ -38,7 +38,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 		// GETリクエストは基本的に入力フォームを表示
         // 確認画面から「修正する」で戻ってきた場合もここに来る想定
         // セッションに一時データがあれば、それをJSPで表示するためにフォワードする
-        request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/jsp/sadmin_register_employee_form.jsp").forward(request, response);
          // JSPをWEB-INF配下に置くことで直接アクセスを防ぐ
 	}
 
@@ -63,13 +63,13 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             if (empid == null || empid.trim().isEmpty()){
             	request.setAttribute("formError", "従業員IDを入力してください。");
             	setFormValuesBackToRequest(request, empid, lname, fname, roleStr);
-            	request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+            	request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
                 return;
 
             }else if(empid.trim().length()>8) {
             	request.setAttribute("formError", "従業員IDは8桁以下で入力してください。");
                 setFormValuesBackToRequest(request, empid, lname, fname, roleStr);
-                request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
                 return;
 
             }
@@ -79,7 +79,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             if (dao.isEmpidExists(empid.trim())) {
                 request.setAttribute("formError", "入力された従業員IDは既に使用されています。");
                 setFormValuesBackToRequest(request, empid, lname, fname, roleStr); // 入力値を戻す
-                request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
             // --- 重複チェック完了 ---
@@ -98,7 +98,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                 // 入力値をリクエスト属性に再設定してフォームに戻す（またはセッションを使う）
                 // 簡単な例としてエラーメッセージのみ設定
                 
-                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+                 request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
 
@@ -118,7 +118,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             session.setAttribute("tempEmployee", tempEmployee);
 
             // 確認画面へフォワード
-            request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_confirm.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_confirm.jsp").forward(request, response);
 
         } else if ("register".equals(action)) {
             // --- 確認画面からの登録実行処理 ---
@@ -127,7 +127,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
             if (employeeToRegister == null) {
                 // セッション切れなどのエラー
                 request.setAttribute("formError", "セッション情報が見つかりません。最初からやり直してください。");
-                request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
                 return;
             }
 
@@ -157,11 +157,11 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 
                 if (success) {
                     // 登録成功ページへリダイレクト (PRGパターン)
-                    request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_complete.jsp").forward(request, response); // 成功画面を作成
+                    request.getRequestDispatcher("/WEB-INF/jsp/admin_register_complete.jsp").forward(request, response); // 成功画面を作成
                 } else {
                     // 登録失敗 (例: DBエラー)
                     request.setAttribute("formError", "データベースへの登録に失敗しました。");
-                    request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
                 }
 
             } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -169,13 +169,13 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
                  e.printStackTrace(); // ログ記録
                  session.removeAttribute("tempEmployee"); // セッションクリア
                  request.setAttribute("formError", "パスワード処理中にエラーが発生しました。");
-                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+                 request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
             } catch (Exception e) {
                  // その他の予期せぬ例外
                  e.printStackTrace();
                  session.removeAttribute("tempEmployee");
                  request.setAttribute("formError", "予期せぬエラーが発生しました。");
-                 request.getRequestDispatcher("/WEB-INF/jsp/E100/admin_register_employee_form.jsp").forward(request, response);
+                 request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
             }
         } else {
             // actionパラメータがない、または不正な場合

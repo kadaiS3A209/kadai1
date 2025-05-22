@@ -83,13 +83,13 @@ public class LoginServlet extends HttpServlet {
 
             switch (employee.getRole()) {
                 case 3: // 管理者
-                    request.getRequestDispatcher("/WEB-INF/jsp/L100/menu_admin.jsp").forward(request, response);
+                    request.getRequestDispatcher("/WEB-INF/jsp/menu_admin.jsp").forward(request, response);
                     break;
                 case 1: // 受付
-                	request.getRequestDispatcher("/WEB-INF/jsp/L100/menu_reception.jsp").forward(request, response);
+                	request.getRequestDispatcher("/WEB-INF/jsp/menu_reception.jsp").forward(request, response);
                     break;
                 case 2: // 医師
-                	request.getRequestDispatcher("/WEB-INF/jsp/L100/menu_doctor.jsp").forward(request, response);
+                	request.getRequestDispatcher("/WEB-INF/jsp/menu_doctor.jsp").forward(request, response);
                     break;
                 default:
                     session.invalidate();

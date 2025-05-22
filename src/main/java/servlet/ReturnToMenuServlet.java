@@ -28,13 +28,13 @@ public class ReturnToMenuServlet extends HttpServlet {
             // ロールに基づいてリダイレクト先を決定
             switch (userRole) {
             	case 3: // 管理者
-            		request.getRequestDispatcher("/WEB-INF/jsp/L100/menu_admin.jsp").forward(request, response);
+            		request.getRequestDispatcher("/WEB-INF/jsp/menu_admin.jsp").forward(request, response);
             		break;
             	case 1: // 受付
-            		request.getRequestDispatcher("/WEB-INF/jsp/L100/menu_reception.jsp").forward(request, response);
+            		request.getRequestDispatcher("/WEB-INF/jsp/menu_reception.jsp").forward(request, response);
             		break;
             	case 2: // 医師
-            		request.getRequestDispatcher("/WEB-INF/jsp/L100/menu_doctor.jsp").forward(request, response);
+            		request.getRequestDispatcher("/WEB-INF/jsp/menu_doctor.jsp").forward(request, response);
                     break;
                 default:
                     // 不明なロール、または予期せぬ状態
