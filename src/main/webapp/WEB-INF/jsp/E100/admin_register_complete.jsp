@@ -9,7 +9,7 @@
 <body>
 <h1>従業員登録完了</h1>
 <p>従業員の登録が完了しました</p>
-<p><a href = "AdminMenuServlet">管理者メニューへ戻る</a></p>
+<p><a href = "ReturnToMenuServlet">管理者メニューへ戻る</a></p>
 
 
 
