@@ -1,0 +1,8 @@
+JSTLのタグのURI
+| URI                      | タグ        | 使用例                                                      |
+| ------------------------ | --------- | -------------------------------------------------------- |
+| `jakarta.tags.core`      | `<c:*>`   | `<%@ taglib uri="jakarta.tags.core" prefix="c" %>`       |
+| `jakarta.tags.fmt`       | `<fmt:*>` | `<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>`      |
+| `jakarta.tags.sql`       | `<sql:*>` | `<%@ taglib uri="jakarta.tags.sql" prefix="sql" %>`      |
+| `jakarta.tags.functions` | `<fn:*>`  | `<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>` |
+

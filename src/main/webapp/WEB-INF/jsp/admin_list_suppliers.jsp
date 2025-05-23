@@ -2,8 +2,8 @@
 <%@ page import="java.util.List" %>
 <%@ page import="model.ShiiregyoshaBean" %> <%-- パスを合わせる --%>
 <%-- JSTLを使う場合 --%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <!DOCTYPE html>
 <html>
