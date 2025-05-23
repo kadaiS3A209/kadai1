@@ -104,4 +104,44 @@ public class ShiiregyoshaDAO {
      }
      return supplierList;
  }
+ 
+ 
+ /**
+  * 指定された最小資本金額以上の仕入先情報を検索します。
+  * @param minCapital 検索する最小資本金額
+  * @return 条件に一致する仕入先情報のリスト。見つからない場合は空のリスト。
+  */
+ public List<ShiiregyoshaBean> searchSuppliersByCapital(int minCapital) {
+     List<ShiiregyoshaBean> supplierList = new ArrayList<>();
+     // 資本金が指定額以上で、資本金の昇順、次にIDの昇順で並び替え
+     String sql = "SELECT shiireid, shiiremei, shiireaddress, shiiretel, shihonkin, nouki " +
+                  "FROM shiiregyosha WHERE shihonkin >= ? " +
+                  "ORDER BY shihonkin ASC, shiireid ASC";
+     Connection con = null;
+     PreparedStatement ps = null;
+     ResultSet rs = null;
+
+     try {
+         con = DBManager.getConnection(); // 実際の接続方法に合わせる
+         ps = con.prepareStatement(sql);
+         ps.setInt(1, minCapital);
+         rs = ps.executeQuery();
+
+         while (rs.next()) {
+             ShiiregyoshaBean supplier = new ShiiregyoshaBean();
+             supplier.setShiireId(rs.getString("shiireid"));
+             supplier.setShiireMei(rs.getString("shiiremei"));
+             supplier.setShiireAddress(rs.getString("shiireaddress"));
+             supplier.setShiireTel(rs.getString("shiiretel"));
+             supplier.setShihonkin(rs.getInt("shihonkin"));
+             supplier.setNouki(rs.getInt("nouki"));
+             supplierList.add(supplier);
+         }
+     } catch (SQLException e) {
+         e.printStackTrace(); // 適切なエラーハンドリング
+     } finally {
+         DBManager.close(con, ps, rs);
+     }
+     return supplierList;
+ }
 }

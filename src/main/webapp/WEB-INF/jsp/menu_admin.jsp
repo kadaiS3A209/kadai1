@@ -22,6 +22,8 @@
         <li><a href="AdminListSuppliersServlet">仕入先一覧</a></li> <%-- S3A209担当の仕入先一覧 --%>
         <li><a href="AdminAddSupplierServlet">仕入先登録</a></li>   <%-- S3A209担当の仕入先登録 --%>
         <%-- 他の管理者機能へのリンク --%>
+        <%-- menu_admin.jsp のリスト項目に追加 --%>
+		<li><a href="AdminSearchSupplierByCapitalServlet">仕入先検索 (資本金)</a></li><%-- S3A209担当の仕入先検索(資本金) --%>
         <li><a href="EmployeeChangePasswordServlet">自身のパスワード変更</a></li>
         <li><a href="LogoutServlet">ログアウト</a></li>
     </ul>
