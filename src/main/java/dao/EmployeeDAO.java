@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import model.EmployeeBean;
 
@@ -141,6 +143,38 @@ public class EmployeeDAO {
     }
 
 
+ // --- Method to get all employees ---
+    public List<EmployeeBean> getAllEmployees() {
+        List<EmployeeBean> employeeList = new ArrayList<>();
+        String sql = "SELECT empid, empfname, emplname, emprole FROM employee ORDER BY empid ASC";
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+        	con = DBManager.getConnection();
+            ps = con.prepareStatement(sql);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                EmployeeBean employee = new EmployeeBean();
+                employee.setEmpid(rs.getString("empid"));
+                employee.setEmpfname(rs.getString("empfname"));
+                employee.setEmplname(rs.getString("emplname"));
+                employee.setRole(rs.getInt("emprole"));
+                employeeList.add(employee);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Consider more robust error handling
+        } finally {
+        	DBManager.close(con, ps, rs);
+        }
+        return employeeList;
+    }
+
+    
+
+    
     
     
    
