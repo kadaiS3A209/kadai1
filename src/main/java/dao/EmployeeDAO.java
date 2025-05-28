@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 import model.EmployeeBean;
 
@@ -47,26 +48,24 @@ public class EmployeeDAO {
     
  // パスワード更新メソッド
     public boolean updatePassword(String empId, String newHashedPassword, String newSalt) {
-        Connection conn = null;
+    	String sql = "UPDATE employee SET emppasswd = ?, salt = ? WHERE empid = ?";
+        Connection con = null;
         PreparedStatement ps = null;
-        String sql = "UPDATE employee SET emppasswd = ?, salt = ? WHERE empid = ?";
-        
-        
+        boolean success = false;
         try {
-            conn = DBManager.getConnection();
-            ps = conn.prepareStatement(sql);
+            con = DBManager.getConnection();
+            ps = con.prepareStatement(sql);
             ps.setString(1, newHashedPassword);
             ps.setString(2, newSalt);
             ps.setString(3, empId);
-            int result = ps.executeUpdate();
-            return result > 0;
-            
-        }catch(SQLException e) {
-        	e.printStackTrace();
-        	return false;
-        }finally {
-        	DBManager.close(conn, ps);
+            int rowsAffected = ps.executeUpdate();
+            success = (rowsAffected > 0);
+        } catch (SQLException e) {
+            e.printStackTrace(); // 適切なエラーハンドリング
+        } finally {
+            DBManager.close(con, ps);
         }
+        return success;
     }
     
     
@@ -174,7 +173,67 @@ public class EmployeeDAO {
 
     
 
-    
+    /**
+     * 指定されたロールIDのリストに合致し、かつオプションで従業員IDにも合致する従業員のリストを取得します。
+     *
+     * @param roleIdsToInclude 取得対象のロールIDのリスト。nullまたは空の場合はロールで絞り込まない（※このメソッドの用途では通常指定）。
+     * @param searchEmpId 検索する従業員ID。nullまたは空の場合はIDで絞り込まない。
+     * @return 条件に一致する従業員のリスト。
+     */
+    public List<EmployeeBean> getEmployees(List<Integer> roleIdsToInclude, String searchEmpId) {
+        List<EmployeeBean> employeeList = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder("SELECT empid, empfname, emplname, emprole FROM employee WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (roleIdsToInclude != null && !roleIdsToInclude.isEmpty()) {
+            sqlBuilder.append(" AND emprole IN (");
+            StringJoiner rolePlaceholders = new StringJoiner(",");
+            for (Integer roleId : roleIdsToInclude) {
+                rolePlaceholders.add("?");
+                params.add(roleId);
+            }
+            sqlBuilder.append(rolePlaceholders.toString());
+            sqlBuilder.append(")");
+        }
+
+        if (searchEmpId != null && !searchEmpId.trim().isEmpty()) {
+            sqlBuilder.append(" AND empid LIKE ?");
+            params.add("%" + searchEmpId.trim() + "%"); // 部分一致検索の場合
+            // 完全一致の場合は params.add(searchEmpId.trim()); sqlBuilder.append(" AND empid = ?");
+        }
+
+        sqlBuilder.append(" ORDER BY empid ASC");
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            con = DBManager.getConnection();
+            ps = con.prepareStatement(sqlBuilder.toString());
+
+            int paramIndex = 1;
+            for (Object param : params) {
+                ps.setObject(paramIndex++, param);
+            }
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                EmployeeBean employee = new EmployeeBean();
+                employee.setEmpid(rs.getString("empid"));
+                employee.setEmpfname(rs.getString("empfname"));
+                employee.setEmplname(rs.getString("emplname"));
+                employee.setRole(rs.getInt("emprole"));
+                employeeList.add(employee);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // 適切なエラーハンドリング
+        } finally {
+            DBManager.close(con, ps, rs);
+        }
+        return employeeList;
+    }
     
     
    

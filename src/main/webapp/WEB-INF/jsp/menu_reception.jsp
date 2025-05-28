@@ -18,10 +18,9 @@
     <p>ようこそ、<%= userName != null ? userName : "受付担当" %> さん</p>
     <ul>
         <li><a href="ReceptionRegisterPatientServlet">患者登録</a></li>
-        <li><a href="ReceptionSearchPatientByNameServlet">患者名検索</a></li> <%-- S3A209担当 --%>
-        <li><a href="ReceptionCheckExpiredInsuranceServlet">保険証期限切れ確認</a></li> <%-- S3A209担当 --%>
+        <li><a href="ReceptionListPatientsServlet">患者一覧・検索・保険証変更</a></li>
         <%-- 他の受付機能へのリンク --%>
-        <li><a href="EmployeeChangePasswordServlet">自身のパスワード変更</a></li>
+        <li><a href="EmployeeChangeOwnPasswordServlet">自身のパスワード変更</a></li>
         <li><a href="LogoutServlet">ログアウト</a></li>
     </ul>
 </body>

@@ -19,7 +19,8 @@
     <p>ようこそ、<%= userName != null ? userName : "管理者" %> さん</p>
     <ul>
         <li><a href="AdminRegisterEmployeeServlet">従業員登録</a></li>
-        <li><a href="AdminListEmployeesServlet">従業員一覧・管理</a></li>
+        <li><a href="AdminListStaffServlet">従業員(受付・医師)一覧・管理</a></li>
+		<li><a href="AdminListAdministratorsServlet">管理者一覧・管理</a></li>
         
         <li><a href="AdminAddSupplierServlet">仕入先登録</a></li>   <%-- S3A209担当の仕入先登録 --%>
         <li><a href="AdminListSuppliersServlet">仕入先一覧/検索</a></li> <%-- S3A209担当の仕入先一覧・検索 --%>
