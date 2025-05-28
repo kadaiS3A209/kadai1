@@ -2,21 +2,22 @@ package model; // パッケージは適宜変更
 
 import java.io.Serializable;
 
-public class MedicineBean implements Serializable {
+public class DrugOrderItemBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String medicineId;    // 薬剤ID (medicineid)
-    private String medicineName;  // 薬剤名 (medicinename)
-    private String unit;          // 単位 (unit)
+    private String medicineId;
+    private String medicineName;
+    private int quantity;
+    private String unit;
+    // 必要であれば、単価や合計金額などのフィールドも追加可能
 
-    // デフォルトコンストラクタ
-    public MedicineBean() {
+    public DrugOrderItemBean() {
     }
 
-    // 全フィールドコンストラクタ (任意)
-    public MedicineBean(String medicineId, String medicineName, String unit) {
+    public DrugOrderItemBean(String medicineId, String medicineName, int quantity, String unit) {
         this.medicineId = medicineId;
         this.medicineName = medicineName;
+        this.quantity = quantity;
         this.unit = unit;
     }
 
@@ -37,6 +38,14 @@ public class MedicineBean implements Serializable {
         this.medicineName = medicineName;
     }
 
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     public String getUnit() {
         return unit;
     }
@@ -44,15 +53,4 @@ public class MedicineBean implements Serializable {
     public void setUnit(String unit) {
         this.unit = unit;
     }
-
-    // (任意で toString() メソッドなど)
-    @Override
-    public String toString() {
-        return "MedicineBean{" +
-               "medicineId='" + medicineId + '\'' +
-               ", medicineName='" + medicineName + '\'' +
-               ", unit='" + unit + '\'' +
-               '}';
-    }
-
 }

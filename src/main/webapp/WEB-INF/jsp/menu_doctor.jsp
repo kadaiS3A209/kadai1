@@ -17,9 +17,9 @@
     %>
     <p>ようこそ、<%= userName != null ? userName : "医師" %> さん</p>
     <ul>
-        <li><a href="DoctorListAllPatientsServlet">患者一覧表示</a></li>
-        <li><a href="doctor_select_patient_for_treatment.jsp">薬剤投与指示</a></li> <%-- 薬剤投与の起点となる画面 --%>
-        <li><a href="doctor_treatment_history_search.jsp">処置履歴確認</a></li> <%-- 処置履歴確認の起点 --%>
+        <li><a href="DoctorListAllPatientsServlet">患者一覧・検索・薬剤投与指示</a></li>
+        <%-- <li><a href="doctor_select_patient_for_treatment.jsp">薬剤投与指示</a></li>  薬剤投与の起点となる画面 --%>
+        <li><a href="DoctorViewTreatmentHistoryServlet">処置履歴確認</a></li> <%-- 処置履歴確認の起点 --%>
         <%-- 他の医師機能へのリンク --%>
         <li><a href="EmployeeChangeOwnPasswordServlet">自身のパスワード変更</a></li>
         <li><a href="LogoutServlet">ログアウト</a></li>

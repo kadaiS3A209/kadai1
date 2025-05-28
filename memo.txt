@@ -6,3 +6,10 @@ JSTLのタグのURI
 | `jakarta.tags.sql`       | `<sql:*>` | `<%@ taglib uri="jakarta.tags.sql" prefix="sql" %>`      |
 | `jakarta.tags.functions` | `<fn:*>`  | `<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>` |
 
+
+INSERT INTO medicine (medicineid, medicinename, unit) VALUES
+('MED00001', 'アセトアミノフェン錠200mg', '錠'),
+('MED00002', 'イブプロフェン顆粒10%', 'g'),
+('MED00003', 'クラリスロマイシンDS小児用', 'mg'),
+('MED00004', 'リンデロンVG軟膏0.12%', '本'),
+('MED00005', '生理食塩液100mL', 'mL');

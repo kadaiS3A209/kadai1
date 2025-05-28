@@ -32,14 +32,17 @@ public class ReceptionListPatientsServlet extends HttpServlet {
 
         String searchName = request.getParameter("searchName");
         String showExpiredOnlyParam = request.getParameter("showExpiredOnly");
-        boolean listExpiredOnly = "true".equals(showExpiredOnlyParam); // P104
+        boolean listExpiredOnlyPrimitive = "true".equals(showExpiredOnlyParam); // P104 (boolean型)
+        Boolean listExpiredOnlyWrapper = listExpiredOnlyPrimitive; // オートボクシング、または Boolean.valueOf(listExpiredOnlyPrimitive);
 
         PatientDAO dao = new PatientDAO();
-        List<PatientBean> patientList = dao.getPatients(searchName, listExpiredOnly);
+        // ★★★ 修正箇所 ★★★
+        // 第1引数に患者ID検索用の値 (今回はnull) を追加
+        List<PatientBean> patientList = dao.getPatients(null, searchName, listExpiredOnlyWrapper);
 
         request.setAttribute("patientList", patientList);
-        request.setAttribute("searchedName", searchName); // 検索フォームに値を再表示するため
-        request.setAttribute("showExpiredOnlyChecked", listExpiredOnly); // チェックボックスの状態を再表示するため
+        request.setAttribute("searchedName", searchName);
+        request.setAttribute("showExpiredOnlyChecked", listExpiredOnlyPrimitive); // JSPでのチェックボックス表示用にはbooleanのままが良い
 
         request.getRequestDispatcher("/WEB-INF/jsp/reception_list_patients.jsp").forward(request, response);
     }

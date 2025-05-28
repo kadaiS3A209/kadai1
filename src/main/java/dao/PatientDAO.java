@@ -87,20 +87,25 @@ public class PatientDAO {
   * @param listExpiredOnly 有効期限切れの患者のみをリストアップする場合はtrue。
   * @return 条件に一致する患者情報のリスト。
   */
- public List<PatientBean> getPatients(String searchName, boolean listExpiredOnly) {
+ public List<PatientBean> getPatients(String searchPatId, String searchName, Boolean listExpiredOnly) {
      List<PatientBean> patientList = new ArrayList<>();
      StringBuilder sql = new StringBuilder("SELECT patid, patfname, patlname, hokenmei, hokenexp FROM patient WHERE 1=1");
      List<Object> params = new ArrayList<>();
 
+     if (searchPatId != null && !searchPatId.trim().isEmpty()) {
+         sql.append(" AND patid LIKE ?");
+         params.add("%" + searchPatId.trim() + "%");
+     }
+
      if (searchName != null && !searchName.trim().isEmpty()) {
-         sql.append(" AND (patfname LIKE ? OR patlname LIKE ?)"); // P103: 患者名検索 (部分一致) [cite: 21]
+         sql.append(" AND (patfname LIKE ? OR patlname LIKE ?)");
          String searchTerm = "%" + searchName.trim() + "%";
          params.add(searchTerm);
          params.add(searchTerm);
      }
 
-     if (listExpiredOnly) {
-         sql.append(" AND hokenexp < CURDATE()"); // P104: 保険証の有効期限が切れている患者 [cite: 58]
+     if (listExpiredOnly != null && listExpiredOnly) {
+         sql.append(" AND hokenexp < CURDATE()");
      }
 
      sql.append(" ORDER BY patid ASC"); // ID順で表示
@@ -124,7 +129,7 @@ public class PatientDAO {
              patient.setPatFname(rs.getString("patfname"));
              patient.setPatLname(rs.getString("patlname"));
              patient.setHokenmei(rs.getString("hokenmei"));
-             patient.setHokenexp(rs.getDate("hokenexp")); // DBのDATE型をjava.util.Dateに変換
+             patient.setHokenexp(rs.getDate("hokenexp"));
              patientList.add(patient);
          }
      } catch (SQLException e) {
@@ -176,55 +181,62 @@ public class PatientDAO {
   * @param finalHokenexp 新しい有効期限。変更しない場合は現在の値を渡すか、nullを考慮する設計に。
   * @return 更新に成功した場合はtrue、失敗した場合はfalse。
   */
- public boolean updatePatientInsurance(String patId, String newHokenmei, Date finalHokenexp) {
-     // P102: 患者の持つ保険証の保険証名記号番号または有効期限又はその両方を変更する機能 [cite: 21]
-     // P102 事後条件: 保険証記号番号が変更となるときは有効期限も確認。有効期限のみ入力の場合は、保険証記号番号は変更されない。 [cite: 54]
-     // このDAOメソッドでは、渡された値で単純にUPDATEする。どちらか一方だけ変更するロジックはサーブレット側で制御する。
-     // ただし、両方nullや空で呼び出されることを防ぐバリデーションはサーブレット側で行うべき。
+ public boolean updatePatientInsurance(String patId, String newHokenmei, Date newHokenexp) {
+	    if (patId == null || patId.trim().isEmpty()) return false;
+	    // 変更するフィールドがあるかどうかのチェック
+	    boolean hokenmeiToUpdate = (newHokenmei != null && !newHokenmei.trim().isEmpty()); // 空文字は変更なしとみなすか、要件次第
+	    boolean hokenexpToUpdate = (newHokenexp != null);
 
-     if (newHokenmei == null && finalHokenexp == null) {
-         return false; // 更新するものが何もない
-     }
+	    if (!hokenmeiToUpdate && !hokenexpToUpdate) {
+	        return false; // 更新するものが何もない
+	    }
 
-     StringBuilder sql = new StringBuilder("UPDATE patient SET ");
-     List<Object> params = new ArrayList<>();
-     boolean firstSet = true;
+	    StringBuilder sql = new StringBuilder("UPDATE patient SET ");
+	    List<Object> params = new ArrayList<>();
+	    boolean firstField = true;
 
-     if (newHokenmei != null) {
-         sql.append("hokenmei = ?");
-         params.add(newHokenmei);
-         firstSet = false;
-     }
+	    if (hokenmeiToUpdate) {
+	        sql.append("hokenmei = ?");
+	        params.add(newHokenmei.trim());
+	        firstField = false;
+	    }
 
-     if (finalHokenexp != null) {
-         if (!firstSet) {
-             sql.append(", ");
-         }
-         sql.append("hokenexp = ?");
-         params.add(new java.sql.Date(finalHokenexp.getTime())); // java.util.Date を java.sql.Date に変換
-     }
+	    if (hokenexpToUpdate) {
+	        if (!firstField) {
+	            sql.append(", ");
+	        }
+	        sql.append("hokenexp = ?");
+	        params.add(new java.sql.Date(newHokenexp.getTime()));
+	    }
 
-     sql.append(" WHERE patid = ?");
-     params.add(patId);
+	    sql.append(" WHERE patid = ?");
+	    params.add(patId);
 
-     Connection con = null;
-     PreparedStatement ps = null;
-     boolean success = false;
-     try {
-         con = DBManager.getConnection();
-         ps = con.prepareStatement(sql.toString());
+	    Connection con = null;
+	    PreparedStatement ps = null;
+	    boolean success = false;
+	    try {
+	        con = DBManager.getConnection();
+	        ps = con.prepareStatement(sql.toString());
 
-         for (int i = 0; i < params.size(); i++) {
-             ps.setObject(i + 1, params.get(i));
-         }
-
-         int result = ps.executeUpdate();
-         success = (result > 0);
-     } catch (SQLException e) {
-         e.printStackTrace();
-     } finally {
-         DBManager.close(con, ps);
-     }
-     return success;
+	        for (int i = 0; i < params.size(); i++) {
+	            ps.setObject(i + 1, params.get(i));
+	        }
+	        int result = ps.executeUpdate();
+	        success = (result > 0);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    } finally {
+	        DBManager.close(con, ps);
+	    }
+	    return success;
+	}
+ 
+//PatientDAO.java
+ public List<PatientBean> getAllPatients() {
+     return getPatients(null, null, null); // ID検索なし、名前検索なし、期限切れフィルタなし
  }
+ 
+ 
+ 
 }

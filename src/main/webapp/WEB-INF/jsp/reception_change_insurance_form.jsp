@@ -44,17 +44,21 @@
                 <div class="form-group">
                     <label for="newHokenmei">新しい保険証記号番号 (変更する場合のみ入力):</label>
                     <%-- エラー時に戻された値を表示 --%>
-                    <c:set var="prevHokenmei" value="${not empty userInput.hokenmei ? userInput.hokenmei : ''}" />
-                    <input type="text" id="newHokenmei" name="newHokenmei" value="<c:out value='${prevHokenmei}'/>" placeholder="現在の値: ${patientToChange.hokenmei}">
+                    <c:set var="currentHokenmeiValue" value="${not empty userInput.hokenmei ? userInput.hokenmei : patientToChange.hokenmei}" />
+					<input type="text" id="newHokenmei" name="newHokenmei" value="<c:out value='${currentHokenmeiValue}'/>" placeholder="現在の値: ${patientToChange.hokenmei}">
                 </div>
                 <div class="form-group">
                     <label for="newHokenexp">新しい有効期限 (変更する場合のみ入力):</label>
                     <%-- エラー時に戻された値を表示 --%>
-                    <c:set var="prevHokenexpStr" value="" />
-                    <c:if test="${not empty userInput.hokenexp}">
-                        <fmt:formatDate value="${userInput.hokenexp}" pattern="yyyy-MM-dd" var="prevHokenexpStr" />
-                    </c:if>
-                     <input type="date" id="newHokenexp" name="newHokenexp" value="<c:out value='${prevHokenexpStr}'/>">
+                    <c:set var="currentHokenexpValueStr" value="" />
+					<c:if test="${not empty userInput.hokenexp}"> <%-- userInputが優先 --%>
+    					<fmt:formatDate value="${userInput.hokenexp}" pattern="yyyy-MM-dd" var="currentHokenexpValueStr" />
+					</c:if>
+					<c:if test="${empty userInput.hokenexp && not empty patientToChange.hokenexp}"> <%-- userInputになければDBの値 --%>
+    					<fmt:formatDate value="${patientToChange.hokenexp}" pattern="yyyy-MM-dd" var="currentHokenexpValueStr" />
+					</c:if>
+					<input type="date" id="newHokenexp" name="newHokenexp" value="<c:out value='${currentHokenexpValueStr}'/>">
+					<%-- ... --%>
                 </div>
                 <button type="submit" class="button">変更内容を確認</button>
             </form>
