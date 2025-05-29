@@ -34,7 +34,7 @@ public class AdminListAdministratorsServlet extends HttpServlet {
         String searchAdminId = request.getParameter("searchAdminId");
 
         // 管理者 (ロールID: 0) のみを対象とする
-        List<Integer> adminRoles = Arrays.asList(0); // 管理者のロールIDを0と仮定
+        List<Integer> adminRoles = Arrays.asList(3); // 管理者のロールIDを0と仮定
         List<EmployeeBean> adminList = dao.getEmployees(adminRoles, searchAdminId);
 
         request.setAttribute("adminList", adminList);

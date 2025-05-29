@@ -95,7 +95,7 @@
                             <label for="quantity">数量:</label>
                             <select id="quantity" name="quantity" required>
                                 <option value="">-- 数量を選択 --</option>
-                                <c:forEach var="i" begin="1" end="10"> <%-- 例: 1から10まで --%>
+                                <c:forEach var="i" begin="1" end="30"> <%-- 例: 1から10まで --%>
                                     <option value="${i}">${i}</option>
                                 </c:forEach>
                                 <%-- 必要ならさらに大きな数量や手入力も検討 --%>
