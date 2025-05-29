@@ -10,8 +10,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import dao.PatientDAO;
 import dao.TreatmentDAO;
 import model.EmployeeBean;
+import model.PatientBean;
 import model.TreatmentHistoryViewBean;
 
 /**
@@ -51,9 +53,29 @@ public class DoctorViewTreatmentHistoryServlet extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/jsp/doctor_select_patient_for_history.jsp").forward(request, response);
                 return;
             }
+            
+            String trimmedPatientId = patientId.trim();
+            
+            
+            PatientDAO patientDao = new PatientDAO();
+            PatientBean patient = patientDao.getPatientById(trimmedPatientId);
+            
+            if (patient == null) {
+                // ★★★ ここが該当箇所 ★★★
+                // 患者が存在しない場合のエラーメッセージを「登録されていない旨」を明確にする
+                request.setAttribute("errorMessage_selectPatient", "入力された患者ID「" + trimmedPatientId + "」は登録されていません。");
+                request.getRequestDispatcher("/WEB-INF/jsp/doctor_select_patient_for_history.jsp").forward(request, response);
+                return; // ここで処理を終了し、入力画面に戻す
+            }
+            
+            
+            
 
             TreatmentDAO dao = new TreatmentDAO();
             List<TreatmentHistoryViewBean> historyList = dao.getTreatmentHistoryByPatientId(patientId.trim());
+            
+            
+            
 
             // 患者名を取得して表示するため（リストが空でも患者名は表示したい場合）
             // もしTreatmentHistoryViewBeanにpatientNameがセットされていれば、最初の要素から取るか、別途PatientDAOで取得
