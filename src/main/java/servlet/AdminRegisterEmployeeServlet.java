@@ -38,7 +38,7 @@ public class AdminRegisterEmployeeServlet extends HttpServlet {
 		// GETリクエストは基本的に入力フォームを表示
         // 確認画面から「修正する」で戻ってきた場合もここに来る想定
         // セッションに一時データがあれば、それをJSPで表示するためにフォワードする
-        request.getRequestDispatcher("/WEB-INF/jsp/sadmin_register_employee_form.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/jsp/admin_register_employee_form.jsp").forward(request, response);
          // JSPをWEB-INF配下に置くことで直接アクセスを防ぐ
 	}
 
