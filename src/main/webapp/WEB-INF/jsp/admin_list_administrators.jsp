@@ -48,7 +48,8 @@
                             <td><c:out value="${admin.emplname} ${admin.empfname}" /></td>
                             <td>管理者</td>
                             <td>
-                                <a href="AdminChangeUserPasswordServlet?action=showForm&empId=<c:out value='${admin.empid}'/>" class="action-button">パスワード変更</a>
+                                <a href="AdminManageEmployeesServlet?action=showNameChangeForm&empId=<c:out value='${admin.empid}'/>&source=adminList" class="action-button button-change-name">氏名変更</a>
++                               <a href="AdminChangeUserPasswordServlet?action=showForm&empId=<c:out value='${admin.empid}'/>&source=adminList" class="action-button button-change-password">パスワード変更</a>
                             </td>
                         </tr>
                     </c:forEach>

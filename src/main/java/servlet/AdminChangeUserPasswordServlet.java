@@ -27,19 +27,21 @@ public class AdminChangeUserPasswordServlet extends HttpServlet {
         String empId = request.getParameter("empId"); // ここではユーザーIDをempIdで統一
 
         if ("showForm".equals(action) && empId != null && !empId.isEmpty()) {
+            String source = request.getParameter("source"); // ★ source パラメータを取得
             EmployeeDAO dao = new EmployeeDAO();
-            EmployeeBean userToChange = dao.getEmployeeById(empId); // 共通のメソッドで取得
+            EmployeeBean userToChange = dao.getEmployeeById(empId);
 
             if (userToChange != null) {
-                request.setAttribute("userToChange", userToChange); // JSPで表示するユーザー情報
+                request.setAttribute("userToChange", userToChange);
+                request.setAttribute("sourcePage", source); // ★ source をリクエスト属性にセット
                 request.getRequestDispatcher("/WEB-INF/jsp/admin_change_user_password_form.jsp").forward(request, response);
             } else {
-                request.setAttribute("listErrorMessage", "指定されたユーザーIDが見つかりません。"); // エラーメッセージ属性名変更
-                // 元のリスト（従業員か管理者か）を特定するのは難しいため、メニューに戻すか汎用エラーページへ
-                request.getRequestDispatcher("ReturnToMenuServlet").forward(request, response);
+                request.setAttribute("listErrorMessage", "指定されたユーザーIDが見つかりません。");
+                // 適切なエラー処理またはリダイレクト (例: 管理者メニューへ)
+                response.sendRedirect("ReturnToMenuServlet"); // または特定のリストへ
             }
         } else {
-            response.sendRedirect("ReturnToMenuServlet"); // 不正なアクセスはメニューへ
+            response.sendRedirect("ReturnToMenuServlet");
         }
     }
 

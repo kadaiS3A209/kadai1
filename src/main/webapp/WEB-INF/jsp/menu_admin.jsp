@@ -26,6 +26,8 @@
         <li><a href="AdminListSuppliersServlet">仕入先一覧/検索</a></li> <%-- S3A209担当の仕入先一覧・検索 --%>
         <%-- 他の管理者機能へのリンク --%>
         <%-- menu_admin.jsp のリスト項目に追加 --%>
+        <li><a href="AdminAddTabyouinServlet">他病院 新規登録</a></li>
+        <li><a href="AdminManageTabyouinServlet">他病院管理</a></li>
 
         <li><a href="EmployeeChangePasswordServlet">自身のパスワード変更</a></li>
         <li><a href="LogoutServlet">ログアウト</a></li>

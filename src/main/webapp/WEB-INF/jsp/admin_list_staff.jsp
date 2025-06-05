@@ -11,8 +11,25 @@
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     th { background-color: #f2f2f2; }
+    
+    .action-button {
+        display: inline-block;
+        padding: 5px 10px;
+        margin-right: 5px;
+        color: white !important;
+        text-decoration: none;
+        border-radius: 3px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9em;
+        text-align: center;
+    }
+    .button-change-name { background-color: #17a2b8; } /* 氏名変更ボタンの色 (例: Info色) */
+    .button-change-name:hover { background-color: #138496; }
+    .button-change-password { background-color: #ffc107; color: black !important; } /* パスワード変更ボタンの色 (例: Warning色) */
+    .button-change-password:hover { background-color: #e0a800; }
     .search-form { margin-bottom: 20px; padding: 10px; background-color:#f9f9f9; border:1px solid #eee; }
-    .button, .action-button { padding: 5px 10px; background-color: #007bff; color:white; text-decoration:none; border-radius:3px; border:none; cursor:pointer; }
+    .button { padding: 5px 10px; background-color: #007bff; color:white; text-decoration:none; border-radius:3px; border:none; cursor:pointer; }
     .button-bar { margin-bottom:15px;}
 </style>
 </head>
@@ -51,7 +68,9 @@
                                 <c:if test="${staff.role == 2}">医師</c:if>
                             </td>
                             <td>
-                                <a href="AdminChangeUserPasswordServlet?action=showForm&empId=<c:out value='${staff.empid}'/>" class="action-button">パスワード変更</a>
+                                <%-- ★★★ 氏名変更とパスワード変更ボタンを追加 ★★★ --%>
+                                <a href="AdminManageEmployeesServlet?action=showNameChangeForm&empId=<c:out value='${staff.empid}'/>&source=staffList" class="action-button button-change-name">氏名変更</a>
++                               <a href="AdminChangeUserPasswordServlet?action=showForm&empId=<c:out value='${staff.empid}'/>&source=staffList" class="action-button button-change-password">パスワード変更</a>
                             </td>
                         </tr>
                     </c:forEach>

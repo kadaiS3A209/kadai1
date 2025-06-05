@@ -144,4 +144,114 @@ public class ShiiregyoshaDAO {
      }
      return supplierList;
  }
+ 
+ 
+ 
+ /**
+  * 指定された仕入先IDの仕入先情報を取得します。 (電話番号変更フォーム表示用)
+  * @param shiireId 仕入先ID
+  * @return ShiiregyoshaBean オブジェクト、見つからなければ null
+  */
+ public ShiiregyoshaBean getShiiregyoshaById(String shiireId) {
+     ShiiregyoshaBean s = null;
+     String sql = "SELECT shiireid, shiiremei, shiireaddress, shiiretel, shihonkin, nouki FROM shiiregyosha WHERE shiireid = ?";
+     Connection con = null;
+     PreparedStatement ps = null;
+     ResultSet rs = null;
+     try {
+         con = DBManager.getConnection();
+         ps = con.prepareStatement(sql);
+         ps.setString(1, shiireId);
+         rs = ps.executeQuery();
+         if (rs.next()) {
+             s = new ShiiregyoshaBean();
+             s.setShiireId(rs.getString("shiireid"));
+             s.setShiireMei(rs.getString("shiiremei"));
+             s.setShiireAddress(rs.getString("shiireaddress"));
+             s.setShiireTel(rs.getString("shiiretel"));
+             s.setShihonkin(rs.getInt("shihonkin"));
+             s.setNouki(rs.getInt("nouki"));
+         }
+     } catch (SQLException e) {
+         e.printStackTrace(); // 適切なエラーハンドリングを推奨
+     } finally {
+         DBManager.close(con, ps, rs);
+     }
+     return s;
+ }
+
+ /**
+  * 仕入先の電話番号を更新します。 (A102-D)
+  * @param shiireId 更新対象の仕入先ID
+  * @param newTel 新しい電話番号
+  * @return 更新に成功した場合は true、失敗した場合は false
+  */
+ public boolean updateShiiregyoshaTel(String shiireId, String newTel) {
+     String sql = "UPDATE shiiregyosha SET shiiretel = ? WHERE shiireid = ?";
+     Connection con = null;
+     PreparedStatement ps = null;
+     boolean success = false;
+     if (shiireId == null || shiireId.trim().isEmpty() || newTel == null ) { // newTelが空でもDBにはセットする（空を許容する場合）
+         return false; // IDが不正な場合は更新しない
+     }
+     try {
+         con = DBManager.getConnection();
+         ps = con.prepareStatement(sql);
+         ps.setString(1, newTel.trim()); // 電話番号はトリムして保存
+         ps.setString(2, shiireId.trim());
+         int rowsAffected = ps.executeUpdate();
+         success = (rowsAffected > 0);
+     } catch (SQLException e) {
+         e.printStackTrace(); // 適切なエラーハンドリングを推奨
+     } finally {
+         DBManager.close(con, ps);
+     }
+     return success;
+ }
+
+ /**
+  * 住所の部分一致で仕入先を検索します。 (A102-E)
+  * @param partialAddress 検索する住所の一部。nullまたは空の場合は全件を返す。
+  * @return 条件に一致する仕入先リスト
+  */
+ public List<ShiiregyoshaBean> searchShiiregyoshaByAddress(String partialAddress) {
+     List<ShiiregyoshaBean> list = new ArrayList<>();
+     String sql;
+     List<Object> params = new ArrayList<>();
+
+     if (partialAddress == null || partialAddress.trim().isEmpty()) {
+         // 検索語が空なら全件表示 (既存のgetAllShiiregyoshaを呼び出すか、同様のSQLを実行)
+         return getAllSuppliers();
+     } else {
+         sql = "SELECT shiireid, shiiremei, shiireaddress, shiiretel, shihonkin, nouki FROM shiiregyosha WHERE shiireaddress LIKE ? ORDER BY shiireid ASC";
+         params.add("%" + partialAddress.trim() + "%");
+     }
+
+     Connection con = null;
+     PreparedStatement ps = null;
+     ResultSet rs = null;
+     try {
+         con = DBManager.getConnection();
+         ps = con.prepareStatement(sql);
+         for (int i = 0; i < params.size(); i++) {
+             ps.setObject(i + 1, params.get(i));
+         }
+         rs = ps.executeQuery();
+         while (rs.next()) {
+             ShiiregyoshaBean s = new ShiiregyoshaBean();
+             s.setShiireId(rs.getString("shiireid"));
+             s.setShiireMei(rs.getString("shiiremei"));
+             s.setShiireAddress(rs.getString("shiireaddress"));
+             s.setShiireTel(rs.getString("shiiretel"));
+             s.setShihonkin(rs.getInt("shihonkin"));
+             s.setNouki(rs.getInt("nouki"));
+             list.add(s);
+         }
+     } catch (SQLException e) {
+         e.printStackTrace(); // 適切なエラーハンドリングを推奨
+     } finally {
+         DBManager.close(con, ps, rs);
+     }
+     return list;
+ }
 }

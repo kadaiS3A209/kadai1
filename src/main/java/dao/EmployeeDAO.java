@@ -236,7 +236,60 @@ public class EmployeeDAO {
     }
     
     
-   
+    /**
+     * 指定された従業員の氏名（姓と名）を更新します。
+     * @param empId 更新対象の従業員ID
+     * @param newEmpLname 新しい姓
+     * @param newEmpFname 新しい名
+     * @return 更新に成功した場合は true、失敗した場合は false
+     */
+    public boolean updateEmployeeName(String empId, String newEmpLname, String newEmpFname) {
+        String sql = "UPDATE employee SET emplname = ?, empfname = ? WHERE empid = ?";
+        Connection con = null;
+        PreparedStatement ps = null;
+        boolean success = false;
+
+        // 入力値の基本的なチェック (nullや空文字など) はサーブレット側で行う前提
+        if (empId == null || empId.trim().isEmpty() ||
+            newEmpLname == null || newEmpLname.trim().isEmpty() ||
+            newEmpFname == null || newEmpFname.trim().isEmpty()) {
+            return false; // 不正な入力
+        }
+
+        try {
+            con = DBManager.getConnection();
+            ps = con.prepareStatement(sql);
+            ps.setString(1, newEmpLname.trim());
+            ps.setString(2, newEmpFname.trim());
+            ps.setString(3, empId.trim());
+
+            int rowsAffected = ps.executeUpdate();
+            success = (rowsAffected > 0);
+        } catch (SQLException e) {
+            e.printStackTrace(); // 適切なエラーハンドリング
+        } finally {
+            DBManager.close(con, ps);
+        }
+        return success;
+    }
+    
+    
+    /**
+     * 全ての従業員を取得します (ロールによる絞り込みなし)。
+     * @return 全従業員のリスト
+     */
+    public List<EmployeeBean> getAllEmployeesRegardlessOfRole() {
+        // 既存のgetEmployeesメソッドを呼び出す (roleIdsToInclude に null を渡すか、
+        // 全ての可能性のあるロールIDのリストを渡す。あるいは専用SQLを記述)
+        // ここでは、getEmployeesが roleIdsToInclude = null で全件取得できる前提
+        return getEmployees(null, null); // 既存のgetEmployeesメソッドを検索条件なしで呼び出す
+                                             // (getEmployees の第3引数がBoolean listExpiredOnly だった場合)
+                                             // PatientDAOのgetPatients(String, String, Boolean)を参考にした場合、
+                                             // こちらは getEmployees(null, null) のような形になる。
+                                             // EmployeeDAO.getEmployees の引数構成に合わせてください。
+                                             // 仮に EmployeeDAO.getEmployees(List<Integer> roleIds, String searchEmpId) の場合:
+                                             // return getEmployees(null, null);
+    }
     
     
 }
