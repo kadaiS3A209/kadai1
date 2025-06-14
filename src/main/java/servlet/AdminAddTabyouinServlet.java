@@ -103,7 +103,7 @@ public class AdminAddTabyouinServlet extends HttpServlet {
             }
 
             session.setAttribute("tempTabyouin", tabyouin);
-            response.sendRedirect(request.getContextPath() + "/WEB-INF/jsp/admin_add_tabyouin_confirm.jsp"); // 確認画面へ
+            request.getRequestDispatcher("/WEB-INF/jsp/admin_add_tabyouin_confirm.jsp").forward(request, response); // 確認画面へ
 
         } else if ("register".equals(action)) {
             TabyouinBean tabyouinToRegister = (TabyouinBean) session.getAttribute("tempTabyouin");

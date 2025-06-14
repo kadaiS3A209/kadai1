@@ -1,36 +1,56 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ page import="model.EmployeeBean" %>
+
+<%
+    // セッションからログインユーザー情報を取得
+    EmployeeBean user = (EmployeeBean) session.getAttribute("loggedInUser");
+    // 未ログイン、または管理者ロール(ID:3と仮定)でない場合はログインページにリダイレクト
+    if (user == null || user.getRole() != 3) {
+        response.sendRedirect("LoginServlet");
+        return;
+    }
+%>
+
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>管理者メニュー</title>
-<style> /* 共通スタイルを外部CSSにすると良い */ </style>
+    <meta charset="UTF-8">
+    <title>管理者メニュー</title>
+    <link rel="stylesheet" href="css/menu_style.css">
 </head>
-<body>
-    <h1>管理者メニュー</h1>
-    <% EmployeeBean user = (EmployeeBean) session.getAttribute("loggedInUser");
-       if (user == null || user.getRole() != 3) { // 3を管理者ロール
-           response.sendRedirect("LoginServlet"); // 不正アクセスはログインへ
-           return;
-       }
-       String userName = (String) session.getAttribute("userName");
-    %>
-    <p>ようこそ、<%= userName != null ? userName : "管理者" %> さん</p>
-    <ul>
-        <li><a href="AdminRegisterEmployeeServlet">従業員登録</a></li>
-        <li><a href="AdminListStaffServlet">従業員(受付・医師)一覧・管理</a></li>
-		<li><a href="AdminListAdministratorsServlet">管理者一覧・管理</a></li>
-        
-        <li><a href="AdminAddSupplierServlet">仕入先登録</a></li>   <%-- S3A209担当の仕入先登録 --%>
-        <li><a href="AdminListSuppliersServlet">仕入先一覧/検索</a></li> <%-- S3A209担当の仕入先一覧・検索 --%>
-        <%-- 他の管理者機能へのリンク --%>
-        <%-- menu_admin.jsp のリスト項目に追加 --%>
-        <li><a href="AdminAddTabyouinServlet">他病院 新規登録</a></li>
-        <li><a href="AdminManageTabyouinServlet">他病院管理</a></li>
+<body class="role-admin">
 
-        <li><a href="EmployeeChangePasswordServlet">自身のパスワード変更</a></li>
-        <li><a href="LogoutServlet">ログアウト</a></li>
-    </ul>
+    <div class="menu-container">
+        <header class="menu-header">
+            <h1>管理者メニュー</h1>
+            <div class="user-info">
+                ようこそ、
+                <span class="user-name">
+                    <c:out value="${sessionScope.loggedInUser.emplname} ${sessionScope.loggedInUser.empfname}"/>
+                </span> さん
+                <a href="LogoutServlet" class="logout-button">ログアウト</a>
+            </div>
+        </header>
+
+        <nav class="menu-nav">
+            <ul>
+                <li><a href="AdminListStaffServlet">従業員(受付・医師)管理</a></li>
+                <li><a href="AdminListAdministratorsServlet">管理者管理</a></li>
+                <li><a href="AdminListSuppliersServlet">仕入先管理</a></li>
+                <li><a href="AdminManageTabyouinServlet">他病院管理</a></li>
+                <li><a href="EmployeeChangeOwnPasswordServlet">自身のパスワード変更</a></li>
+            </ul>
+        </nav>
+
+        <main class="menu-content">
+            <p>管理者用メニューです。上のメニューから操作を選択してください。</p>
+        </main>
+
+        <footer class="menu-footer">
+            <p>&copy; 2025 医療機関向け医師・受付・患者管理システム</p>
+        </footer>
+    </div>
+
 </body>
 </html>

@@ -1,0 +1,131 @@
+@charset "UTF-8";/* --- 全体的なスタイル --- */
+body {
+    font-family: 'Segoe UI', 'Meiryo', 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6; /* 背景色を少し柔らかいグレーに */
+    color: #333; /* 基本的な文字色 */
+    line-height: 1.6;
+}
+
+.menu-container {
+    width: 90%;
+    max-width: 1100px; /* 最大幅を設定 */
+    margin: 30px auto; /* 上下のマージンを少し広めに */
+    background-color: #fff;
+    border-radius: 10px; /* 角を少し丸く */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* ソフトな影を少し強く */
+    overflow: hidden; /* 子要素のはみ出しを制御 */
+}
+
+/* --- ヘッダー (.menu-header) --- */
+.menu-header {
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between; /* 両端揃え */
+    align-items: center; /* 垂直方向中央揃え */
+    border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+}
+
+.menu-header h1 {
+    margin: 0;
+    font-size: 2em; /* タイトルを少し大きく */
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.user-info {
+    font-size: 0.95em;
+    text-align: right;
+}
+
+.user-info .user-name {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.logout-button {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 8px 15px;
+    background-color: rgba(255, 255, 255, 0.2); /* 少し透明感のあるボタン */
+    color: white;
+    text-decoration: none;
+    border: 1px solid white;
+    border-radius: 20px; /* 丸みのあるボタン */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.logout-button:hover {
+    background-color: white;
+    color: #333; /* ホバー時に文字色を濃くする */
+}
+
+
+/* --- ロールごとのヘッダー色 --- */
+.role-admin .menu-header {
+    background-color: #28a745; /* 管理者: 信頼感のある緑 */
+    border-bottom-color: #1e7e34;
+}
+
+.role-reception .menu-header {
+    background-color: #17a2b8; /* 受付: 親しみやすい水色 */
+    border-bottom-color: #117a8b;
+}
+
+.role-doctor .menu-header {
+    background-color: #007bff; /* 医師: プロフェッショナルな青 */
+    border-bottom-color: #0056b3;
+}
+
+
+/* --- ナビゲーションメニュー (.menu-nav) --- */
+.menu-nav {
+    padding: 15px 0;
+    background-color: #ffffff;
+}
+
+.menu-nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.menu-nav a {
+    display: block;
+    padding: 15px 30px;
+    text-decoration: none;
+    color: #495057;
+    border-bottom: 1px solid #f0f0f0; /* 区切り線を薄く */
+    transition: background-color 0.2s ease, padding-left 0.2s ease;
+    font-size: 1.1em;
+}
+
+.menu-nav a:hover {
+    background-color: #f8f9fa; /* ホバー時の背景色 */
+    color: #0056b3;
+    padding-left: 35px; /* ホバー時に少しインデントをずらす */
+}
+
+.menu-nav li:last-child a {
+    border-bottom: none;
+}
+
+/* --- メインコンテンツ (.menu-content) --- */
+.menu-content {
+    padding: 30px;
+    min-height: 250px; /* メニューだけでも一定の高さを持たせる */
+    background-color: #fff;
+    font-size: 1.1em;
+}
+
+/* --- フッター (.menu-footer) --- */
+.menu-footer {
+    background-color: #e9ecef; /* 明るめのフッター */
+    color: #6c757d;
+    text-align: center;
+    padding: 20px;
+    font-size: 0.9em;
+    border-top: 1px solid #dee2e6;
+}

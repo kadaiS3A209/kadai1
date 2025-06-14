@@ -24,7 +24,7 @@
         <c:if test="${empty tabyouin}">
             <p>確認情報がありません。入力画面からやり直してください。</p>
             <p><a href="AdminAddTabyouinServlet">入力画面へ戻る</a></p>
-            <% return; %>
+            <%-- return; --%>
         </c:if>
 
         <p>以下の内容で登録します。よろしいですか？</p>

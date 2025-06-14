@@ -91,70 +91,116 @@
     </div>
 
 <script>
-    // 簡易的なクライアントサイドバリデーション (仕入先登録フォームのものを参考に調整)
+    // フォーム要素の取得
     const tabyouinIdInput = document.getElementById('tabyouinId');
-    const tabyouinIdError = document.getElementById('tabyouinIdError');
     const tabyouinMeiInput = document.getElementById('tabyouinMei');
-    const tabyouinMeiError = document.getElementById('tabyouinMeiError');
     const tabyouinAddrssInput = document.getElementById('tabyouinAddrss');
-    const tabyouinAddrssError = document.getElementById('tabyouinAddrssError');
-    const tabyouinTelInput = document.getElementById('tabyouinTel');
-    const tabyouinTelError = document.getElementById('tabyouinTelError');
+    const tabyouinTelInput = document.getElementById('tabyouinTel'); // ★対象の電話番号入力フィールド
     const tabyouinShihonkinInput = document.getElementById('tabyouinShihonkin');
-    const tabyouinShihonkinError = document.getElementById('tabyouinShihonkinError');
-    const kyukyuInput = document.getElementById('kyukyu');
-    const kyukyuError = document.getElementById('kyukyuError');
-    // 他の入力フィールドとエラーメッセージ要素も同様に取得
+    const kyukyuSelect = document.getElementById('kyukyu'); // IDをkyukyuSelectに修正
 
+    // エラーメッセージ要素の取得
+    const tabyouinIdError = document.getElementById('tabyouinIdError');
+    const tabyouinMeiError = document.getElementById('tabyouinMeiError');
+    const tabyouinAddrssError = document.getElementById('tabyouinAddrssError');
+    const tabyouinTelError = document.getElementById('tabyouinTelError'); // ★対象のエラー表示用span
+    const tabyouinShihonkinError = document.getElementById('tabyouinShihonkinError');
+    const kyukyuError = document.getElementById('kyukyuError');
+
+    // 汎用的な必須チェック関数
     function validateRequired(inputEl, errorEl, message) {
         if (!inputEl.value.trim()) {
-            errorEl.textContent = message; errorEl.style.display = 'block'; inputEl.classList.add('input-error'); return false;
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            inputEl.classList.add('input-error');
+            return false;
         }
-        errorEl.style.display = 'none'; inputEl.classList.remove('input-error'); return true;
+        errorEl.style.display = 'none';
+        inputEl.classList.remove('input-error');
+        return true;
     }
 
-    tabyouinIdInput.onblur = () => {
-        if(!validateRequired(tabyouinIdInput, tabyouinIdError, "他病院IDを入力してください。")) return;
-        if (tabyouinIdInput.value.trim().length > 8) {
-            tabyouinIdError.textContent = "他病院IDは8文字以内で入力してください。"; tabyouinIdError.style.display = 'block'; tabyouinIdInput.classList.add('input-error');
-        } else { tabyouinIdError.style.display = 'none'; tabyouinIdInput.classList.remove('input-error'); }
-    };
+    // --- 各フィールドのバリデーション関数 ---
 
- // 他病院名のバリデーション (必須チェックのみ)
+    function validateTabyouinId() {
+        if(!validateRequired(tabyouinIdInput, tabyouinIdError, "他病院IDを入力してください。")) return false;
+        if (tabyouinIdInput.value.trim().length > 8) {
+            tabyouinIdError.textContent = "他病院IDは8文字以内で入力してください。";
+            tabyouinIdError.style.display = 'block';
+            tabyouinIdInput.classList.add('input-error');
+            return false;
+        }
+        tabyouinIdError.style.display = 'none';
+        tabyouinIdInput.classList.remove('input-error');
+        return true;
+    }
+
     function validateTabyouinMei() {
         return validateRequired(tabyouinMeiInput, tabyouinMeiError, "他病院名を入力してください。");
     }
 
-    // 住所のバリデーション (必須チェックのみ)
     function validateTabyouinAddrss() {
         return validateRequired(tabyouinAddrssInput, tabyouinAddrssError, "住所を入力してください。");
     }
 
-    // 電話番号のバリデーション (必須チェック + 簡単な形式チェック)
+    // ▼▼▼ ここからが新しい電話番号バリデーション関数 ▼▼▼
     function validateTabyouinTel() {
         if (!validateRequired(tabyouinTelInput, tabyouinTelError, "電話番号を入力してください。")) {
             return false;
         }
-        const telValue = tabyouinTelInput.value.trim();
-        const telPattern = /^[0-9\-()]{10,15}$/; // 数字、ハイフン、括弧のみ、10～15桁程度の想定
-        if (!telPattern.test(telValue)) {
-            tabyouinTelError.textContent = "電話番号の形式が正しくありません。(例: 012-345-6789)";
+
+        const telValue = tabyouinTelInput.value;
+        let errorMessage = null;
+        const trimmedInput = telValue.trim();
+
+        // 許可されていない文字が含まれていないかチェック
+        if (trimmedInput.match(/[^0-9()-]/)) {
+            errorMessage = "電話番号には数字、ハイフン、括弧以外の文字は使用できません。";
+        } else {
+            // 数字のみを抽出し、桁数と先頭文字をチェック
+            const digitsOnly = trimmedInput.replace(/[^0-9]/g, "");
+
+            if (digitsOnly.length < 10) {
+                errorMessage = "電話番号の桁数が不足しています。数字のみで10桁以上必要です。";
+            } else if (digitsOnly.length > 11) {
+                errorMessage = "電話番号の桁数が超過しています。数字のみで11桁以下です。";
+            } else if (!digitsOnly.startsWith("0")) {
+                errorMessage = "電話番号は0から始まる必要があります。";
+            } else {
+                // 書式のチェック
+                const hyphenGeneralPattern = /^0[1-9]\d{0,3}-\d{1,4}-\d{4}$/;
+                const hyphenSpecialPattern = /^(0120|0800|0570|0990)-\d{3}-\d{3}$/;
+                const parenPattern = /^0[1-9]\d{0,3}\(\d{1,4}\)\d{4}$/;
+
+                // ハイフンや括弧があるのに、どのパターンにも一致しない場合はエラー
+                if (trimmedInput.includes('-') || trimmedInput.includes('(') || trimmedInput.includes(')')) {
+                    if (!hyphenGeneralPattern.test(trimmedInput) &&
+                        !hyphenSpecialPattern.test(trimmedInput) &&
+                        !parenPattern.test(trimmedInput)) {
+                        errorMessage = "電話番号の形式が正しくありません。(例: 03-1234-5678)";
+                    }
+                }
+            }
+        }
+
+        // エラー判定とメッセージ表示
+        if (errorMessage) {
+            tabyouinTelError.textContent = errorMessage;
             tabyouinTelError.style.display = 'block';
             tabyouinTelInput.classList.add('input-error');
             return false;
+        } else {
+            tabyouinTelError.style.display = 'none';
+            tabyouinTelInput.classList.remove('input-error');
+            return true;
         }
-        tabyouinTelError.style.display = 'none';
-        tabyouinTelInput.classList.remove('input-error');
-        return true;
     }
+    // ▲▲▲ 新しい電話番号バリデーション関数の終わり ▲▲▲
 
-    // 資本金のバリデーション (必須チェック + 数値チェック)
     function validateTabyouinShihonkin() {
-        if (!validateRequired(tabyouinShihonkinInput, tabyouinShihonkinError, "資本金を入力してください。")) {
-            return false;
-        }
-        const shihonkinValue = tabyouinShihonkinInput.value.trim().replace(/,/g, ''); // カンマを除去
-        if (isNaN(Number(shihonkinValue)) || Number(shihonkinValue) < 0) { // 数値であること、かつ0以上
+        if (!validateRequired(tabyouinShihonkinInput, tabyouinShihonkinError, "資本金を入力してください。")) return false;
+        const shihonkinValue = tabyouinShihonkinInput.value.trim().replace(/,/g, '');
+        if (isNaN(Number(shihonkinValue)) || Number(shihonkinValue) < 0) {
             tabyouinShihonkinError.textContent = "資本金は0以上の数値を入力してください。";
             tabyouinShihonkinError.style.display = 'block';
             tabyouinShihonkinInput.classList.add('input-error');
@@ -165,54 +211,49 @@
         return true;
     }
 
-    // 救急対応のバリデーション (select要素なので必須チェックのみ)
-    function validateKyukyu() {
-        // select要素の場合、valueが空文字（初期値の「選択してください」など）でないことを確認
-        if (!kyukyuSelect.value) { // valueが "" の場合
-            kyukyuError.textContent = "救急対応を選択してください。";
-            kyukyuError.style.display = 'block';
-            kyukyuSelect.classList.add('input-error');
+    function validateNouki() {
+        if (!validateRequired(noukiInput, noukiError, "納期を入力してください。")) return false;
+        if (isNaN(Number(noukiInput.value.trim()))) {
+            noukiError.textContent = "納期は数値（日数）で入力してください。";
+            noukiError.style.display = 'block';
+            noukiInput.classList.add('input-error');
             return false;
         }
-        kyukyuError.style.display = 'none';
-        kyukyuSelect.classList.remove('input-error');
+        noukiError.style.display = 'none';
+        noukiInput.classList.remove('input-error');
         return true;
     }
 
-
-    // イベントリスナーの設定 (onblur: フォーカスが外れた時)
+    // --- イベントリスナーの設定 ---
+    tabyouinIdInput.onblur = validateTabyouinId;
     tabyouinMeiInput.onblur = validateTabyouinMei;
     tabyouinAddrssInput.onblur = validateTabyouinAddrss;
-    tabyouinTelInput.onblur = validateTabyouinTel;
+    tabyouinTelInput.onblur = validateTabyouinTel; // ★新しい関数を呼び出すように設定
     tabyouinShihonkinInput.onblur = validateTabyouinShihonkin;
-    kyukyuSelect.onblur = validateKyukyu; // select要素もonblurでチェック可能
+    noukiInput.onblur = validateNouki;
+    // kyukyuSelect.onblur の設定が抜けていたので追加
+    // kyukyuSelect.onblur = () => validateRequired(kyukyuSelect, kyukyuError, "救急対応を選択してください。");
 
-    // フォーム送信時の総合バリデーション (既存の addTabyouinForm.onsubmit を修正)
+    // --- フォーム送信時の総合バリデーションを修正 ---
     const form = document.getElementById('addTabyouinForm');
     if(form) {
         form.onsubmit = function(event) {
-            let isValid = true;
-            isValid &= validateRequired(tabyouinIdInput, tabyouinIdError, "他病院IDを入力してください。") && (tabyouinIdInput.value.trim().length <= 8 || (tabyouinIdError.textContent = "他病院IDは8文字以内で入力してください。", tabyouinIdError.style.display = 'block', tabyouinIdInput.classList.add('input-error'), false));
-            isValid &= validateTabyouinMei();
-            isValid &= validateTabyouinAddrss();
-            isValid &= validateTabyouinTel();
-            isValid &= validateTabyouinShihonkin();
-            isValid &= validateKyukyu();
+            // 各バリデーション関数を呼び出して結果をチェック
+            const isIdValid = validateTabyouinId();
+            const isMeiValid = validateTabyouinMei();
+            const isAddrssValid = validateTabyouinAddrss();
+            const isTelValid = validateTabyouinTel(); // ★新しい関数を呼び出す
+            const isShihonkinValid = validateTabyouinShihonkin();
+            const isNoukiValid = validateNouki();
+            // const isKyukyuValid = validateRequired(kyukyuSelect, kyukyuError, "救急対応を選択してください。"); // 救急対応もチェック
 
-            if (!isValid) {
-                event.preventDefault(); // バリデーションエラーがあれば送信を中止
-                // alert("入力内容にエラーがあります。各項目を確認してください。"); // 必要なら全体メッセージ
-                // 最初のエラーフィールドにフォーカスを当てるなどの処理も可能
-                if (!tabyouinIdError.style.display === 'none') tabyouinIdInput.focus();
-                else if (!tabyouinMeiError.style.display === 'none') tabyouinMeiInput.focus();
-                // ...以下同様に
+            if (!isIdValid || !isMeiValid || !isAddrssValid || !isTelValid || !isShihonkinValid || !isNoukiValid) {
+                event.preventDefault(); // いずれかのバリデーションが失敗したら送信を中止
                 return false;
             }
-            return true; // バリデーションOKなら送信
-        };
-    // 他のフィールド (tabyouinMei, tabyouinAddrss, tabyouinTel, tabyouinShihonkin) の onblur バリデーションも同様に追加
-    // 電話番号: /^[0-9()-]+$/ など
-    // 資本金: isNaN(Number(value.replace(/,/g, ''))) など
+            return true;
+        }
+    }
 </script>
 </body>
 </html>

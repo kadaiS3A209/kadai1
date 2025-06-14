@@ -224,8 +224,8 @@ $(document).ready(function() {
         }
         list.forEach(item => {
             const row = `<tr>
-                <td>${$('<div>').text(item.title).html()}</td>
-                <td>${item.createdAt}</td>
+                <td>\${$('<div>').text(item.title).html()}</td>
+                <td>\${item.createdAt}</td>
                 <td><button class="tool-btn load-item-btn" data-id="${item.id}">読込</button></td>
             </tr>`;
             $tbody.append(row);

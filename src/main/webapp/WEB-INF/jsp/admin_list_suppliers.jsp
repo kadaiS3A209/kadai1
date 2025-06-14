@@ -30,7 +30,7 @@
 
         <div class="button-bar">
             <a href="ReturnToMenuServlet" class="button" style="background-color:#6c757d;">管理者メニューへ戻る</a>
-            <%-- <a href="AdminAddSupplierServlet" class="button">新規仕入先登録</a> --%> <%-- 必要なら追加 --%>
+            <a href="AdminAddSupplierServlet" class="button">新規仕入先登録</a>  <%-- 必要なら追加 --%>
         </div>
 
         <div class="search-forms-container">

@@ -149,35 +149,38 @@
 
     // 有効期限のバリデーション
     function validateHokenexp() {
-        if (!validateRequired(hokenexpInput, hokenexpError, "有効期限を入力してください。")) return false;
-
-        // 簡単な日付の妥当性チェック（過去の日付でないかなど）
-        // input type="date" は "YYYY-MM-DD" 形式の値を返す
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // 時刻部分をリセットして日付のみで比較
-
-        const selectedDate = new Date(hokenexpInput.value);
-        selectedDate.setHours(0,0,0,0); // 比較のためこちらも時刻をリセット
-
-        // テストケース「有効期限をありえない日付で新規登録できない」に対応
-        // ここでは例として「今日以降の日付であること」をチェック（要件に合わせて調整）
-        if (selectedDate < today) {
-            // hokenexpError.textContent = "有効期限は本日以降の日付を入力してください。";
-            // hokenexpError.style.display = 'block';
-            // hokenexpInput.classList.add('input-error');
-            // return false;
-            // ↑ 基本設計書P104の「保険証期限確認機能」は「有効期限が切れている患者を一覧表示」なので、
-            //   登録時に過去日付を許容するかどうかはシステムの運用によります。
-            //   ここでは、入力された日付が形式として正しいかは<input type="date">に任せ、
-            //   「ありえない日付」（例: 2月30日など）はブラウザがある程度防ぐと期待します。
-            //   もし厳密な日付ロジック（例: 未来すぎないか）が必要なら、追加します。
-            //   ここでは、「ありえない日付」テストは主にサーバーサイドで担保する方針とし、
-            //   クライアントサイドは必須チェックと基本的な形式（type="date"による）とします。
+        // 必須チェック
+        if (!validateRequired(hokenexpInput, hokenexpError, "有効期限を入力してください。")) {
+            return false;
         }
+
+        const today = new Date();
+        // 今日の日付の時刻部分をリセットして、純粋な日付で比較できるようにする
+        // 例: 2025-06-15 00:00:00
+        today.setHours(0, 0, 0, 0);
+
+        // ユーザーが入力した日付を取得
+        const selectedDate = new Date(hokenexpInput.value);
+        // 時刻の差異による問題を避けるため、こちらも時刻部分をリセット
+        // new Date("2025-06-14") は、環境によって前日の23時などになる場合があるため、
+        // ユーザーのタイムゾーンを考慮してDateオブジェクトを作成するのがより安全
+        // const [year, month, day] = hokenexpInput.value.split('-').map(Number);
+        // const selectedDate = new Date(year, month - 1, day);
+
+        // ★★★ 過去日付のチェックを追加 ★★★
+        if (selectedDate < today) {
+            hokenexpError.textContent = "有効期限は本日以降の日付を入力してください。";
+            hokenexpError.style.display = 'block';
+            hokenexpInput.classList.add('input-error');
+            return false; // バリデーション失敗
+        }
+        
+        // エラーがなければメッセージを非表示にする
         hokenexpError.style.display = 'none';
         hokenexpInput.classList.remove('input-error');
-        return true;
+        return true; // バリデーション成功
     }
+    // ▲▲▲ ここまで修正 ▲▲▲
 
     // イベントリスナーの設定 (onblur: フォーカスが外れた時)
     patidInput.onblur = validatePatId;
