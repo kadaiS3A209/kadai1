@@ -37,6 +37,7 @@
 
         <div class="button-group">
             <form action="AdminAddTabyouinServlet" method="post" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="register">
                 <button type="submit" class="button">登録する</button>
             </form>

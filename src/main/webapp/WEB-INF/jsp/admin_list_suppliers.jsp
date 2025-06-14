@@ -36,6 +36,7 @@
         <div class="search-forms-container">
             <%-- 住所検索フォーム --%>
             <form class="search-form" action="AdminListSuppliersServlet" method="post">
+            	<input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="searchAddress">
                 <label for="searchAddress">住所で検索:</label>
                 <input type="text" id="searchAddress" name="searchAddress" value="<c:out value='${searchedAddress}'/>" placeholder="住所の一部を入力">
@@ -44,6 +45,7 @@
 
             <%-- 資本金検索フォーム (既存) --%>
             <form class="search-form" action="AdminListSuppliersServlet" method="post">
+            	<input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                  <%-- actionパラメータは不要（デフォルトで資本金検索か全件表示を判定するため） --%>
                 <label for="minCapital">資本金 (以上):</label>
                 <input type="text" id="minCapital" name="minCapital" value="<c:out value='${minCapitalInput}'/>" placeholder="例: 1000000">

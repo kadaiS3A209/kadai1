@@ -33,6 +33,7 @@
         </div>
 
         <form class="search-filter-bar" action="ReceptionListPatientsServlet" method="post">
+        	<input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
             <div>
                 <label for="searchName">患者名検索(姓または名):</label>
                 <input type="text" id="searchName" name="searchName" value="<c:out value='${searchedName}'/>" placeholder="例: 山田">

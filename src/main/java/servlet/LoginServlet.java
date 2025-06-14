@@ -75,11 +75,18 @@ public class LoginServlet extends HttpServlet {
 
         if (isAuthenticated) {
             // ... (セッション作成とメニュー画面へのリダイレクト処理は変更なし) ...
-            HttpSession session = request.getSession();
-            session.setAttribute("loggedInUser", employee);
-            session.setAttribute("userId", employee.getEmpid());
-            session.setAttribute("userName", employee.getEmplname() + " " + employee.getEmpfname());
-            session.setAttribute("userRole", employee.getRole());
+        	// ★★★ ここからが修正箇所 ★★★
+            HttpSession oldSession = request.getSession(false);
+            if (oldSession != null) {
+                oldSession.invalidate(); // 古いセッションを破棄
+            }
+            HttpSession newSession = request.getSession(true); // 新しいセッションを強制的に作成
+            // ▲▲▲ ここまで修正 ▲▲▲
+            
+            newSession.setAttribute("loggedInUser", employee);
+            newSession.setAttribute("userId", employee.getEmpid());
+            newSession.setAttribute("userName", employee.getEmplname() + " " + employee.getEmpfname());
+            newSession.setAttribute("userRole", employee.getRole());
 
             switch (employee.getRole()) {
                 case 3: // 管理者
@@ -92,7 +99,7 @@ public class LoginServlet extends HttpServlet {
                 	request.getRequestDispatcher("/WEB-INF/jsp/menu_doctor.jsp").forward(request, response);
                     break;
                 default:
-                    session.invalidate();
+                    newSession.invalidate();
                     request.setAttribute("errorMessage", "不明なユーザーロールです。");
                     request.getRequestDispatcher("index.jsp").forward(request, response);
                     break;

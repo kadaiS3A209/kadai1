@@ -27,6 +27,7 @@
         </c:if>
 
         <form action="DoctorViewTreatmentHistoryServlet" method="post">
+            <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
             <input type="hidden" name="action" value="viewHistory">
             <div class="form-group">
                 <label for="patientIdForHistory">患者ID:</label>

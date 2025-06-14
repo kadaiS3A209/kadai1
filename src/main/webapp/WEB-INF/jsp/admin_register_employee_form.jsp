@@ -1,5 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- JSTLのCoreライブラリを使用するための宣言を追加 --%>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%-- jsp:useBeanで使用するため、model.EmployeeBean の import は残しても良いですが、
+     EL式で直接アクセスする場合は必須ではありません --%>
 <%@ page import="model.EmployeeBean" %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,6 +12,7 @@
 <title>従業員登録</title>
 <style>
     body { font-family: sans-serif; }
+    .form-container { width: 500px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; }
     input[type="text"], input[type="password"], select {
@@ -15,83 +21,91 @@
         border: 1px solid #ccc;
         border-radius: 4px;
     }
-    .error-message { color: red; font-size: 0.9em; margin-top: 3px; display: none; /* 初期状態は非表示 */}
+    .error-message { color: red; font-size: 0.9em; margin-top: 3px; display: none; }
+    .error-message-server { color: red; background-color: #ffebeb; border:1px solid #ffcdd2; padding:8px; border-radius:4px; margin-bottom:10px;}
     .button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
     .button:hover { background-color: #0056b3; }
+    input.input-error { border-color: red; }
 </style>
 </head>
 <body>
+    <div class="form-container">
+        <h1>従業員登録</h1>
 
-    <h1>従業員登録</h1>
+        <%-- サーブレットからのエラーメッセージ表示 --%>
+        <c:if test="${not empty requestScope.formError}">
+            <p class="error-message-server"><c:out value="${requestScope.formError}"/></p>
+        </c:if>
 
-    <%-- エラーメッセージ表示領域 --%>
-    <%
-        String formError = (String) request.getAttribute("formError");
-        if (formError != null) {
-    %>
-        <p style="color:red;"><%= formError %></p>
-    <%
-        }
-        // 確認画面から戻ってきた場合の値を取得
-        EmployeeBean prevInput = (EmployeeBean) session.getAttribute("tempEmployee");
-        
-        String prevLname = (prevInput != null && prevInput.getEmplname() != null) ? prevInput.getEmplname() : "";
-        String prevFname = (prevInput != null && prevInput.getEmpfname() != null) ? prevInput.getEmpfname() : "";
-        String prevRole = (prevInput != null && prevInput.getRole() != 0) ? String.valueOf(prevInput.getRole()) : "";
-        String prevEmpId = (prevInput != null && prevInput.getEmpid() != null) ? prevInput.getEmpid() : "";
-     	// パスワードは再入力させる
-        
-    %>
+        <%--
+            フォームに表示する値を持つBeanを決定するロジック。
+            優先順位：
+            1. リクエストスコープの "prevEmployeeInput" (バリデーションエラーで戻ってきた場合)
+            2. セッションスコープの "tempEmployee" (確認画面から「修正」で戻ってきた場合)
+            3. どちらもなければ、空のBean (新規作成時)
+        --%>
+        <c:choose>
+            <c:when test="${not empty requestScope.prevEmployeeInput}">
+                <c:set var="formBean" value="${requestScope.prevEmployeeInput}" scope="page" />
+            </c:when>
+            <c:when test="${not empty sessionScope.tempEmployee}">
+                <c:set var="formBean" value="${sessionScope.tempEmployee}" scope="page" />
+            </c:when>
+            <c:otherwise>
+                <jsp:useBean id="formBean" class="model.EmployeeBean" scope="page" />
+            </c:otherwise>
+        </c:choose>
 
-    <form id="registerForm" action="AdminRegisterEmployeeServlet" method="post" onsubmit="return validateForm()">
-        <%-- この隠しフィールドで、入力画面からの送信であることを示す --%>
-        <input type="hidden" name="action" value="confirm">
-        
-        <div class="form-group">
-        	<label for="empid">ID</label>
-        	<input type="text" id="empid" name="empid"  value="<%=(String)request.getAttribute("prevEmpId") != null ? (String)request.getAttribute("prevEmpId"): prevEmpId %>" required maxlength="8">
-        	<span id="empidError" class="error-message">従業員IDを入力してください</span>
-        </div>
+        <form id="registerForm" action="AdminRegisterEmployeeServlet" method="post" onsubmit="return validateForm()">
+            <%-- CSRF対策トークン --%>
+            <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
+            <input type="hidden" name="action" value="confirm">
 
-        <div class="form-group">
-            <label for="emplname">姓:</label>
-            <input type="text" id="emplname" name="emplname" value="<%=(String)request.getAttribute("prevLname") != null ? (String)request.getAttribute("prevLname"): prevLname %>" required>
-            <span id="lnameError" class="error-message">姓を入力してください。</span>
-        </div>
+            <div class="form-group">
+                <label for="empid">従業員ID (8桁以内):</label>
+                <input type="text" id="empid" name="empid"  value="<c:out value='${formBean.empid}'/>" required maxlength="8">
+                <span id="empidError" class="error-message"></span>
+            </div>
 
-        <div class="form-group">
-            <label for="empfname">名:</label>
-            <input type="text" id="empfname" name="empfname" value="<%=(String)request.getAttribute("prevFname") != null ? (String)request.getAttribute("prevFname"): prevFname %>" required>
-            <span id="fnameError" class="error-message">名を入力してください。</span>
-        </div>
+            <div class="form-group">
+                <label for="emplname">姓:</label>
+                <input type="text" id="emplname" name="emplname" value="<c:out value='${formBean.emplname}'/>" required>
+                <span id="lnameError" class="error-message"></span>
+            </div>
 
-        <div class="form-group">
-            <label for="emprole">ロール:</label>
-            <select id="emprole" name="emprole" required>
-                <option value="">選択してください</option>
-                <%-- valueはDBのemproleに保存する整数値に合わせる --%>
-                <option value="1" <%= "1".equals(prevRole) ? "selected" : "" %>>受付</option>
-                <option value="2" <%= "2".equals(prevRole) ? "selected" : "" %>>医師</option>
-                <option value="3" <%= "3".equals(prevRole) ? "selected" : "" %>>管理者</option>
-                <%-- 他のロールがあれば追加 --%>
-            </select>
-            <span id="roleError" class="error-message">ロールを選択してください。</span>
-        </div>
+            <div class="form-group">
+                <label for="empfname">名:</label>
+                <input type="text" id="empfname" name="empfname" value="<c:out value='${formBean.empfname}'/>" required>
+                <span id="fnameError" class="error-message"></span>
+            </div>
 
-        <div class="form-group">
-            <label for="password">パスワード:</label>
-            <input type="password" id="password" name="password" required>
-            <span id="passwordError" class="error-message">パスワードを入力してください。</span>
-        </div>
+            <div class="form-group">
+                <label for="emprole">ロール:</label>
+                <select id="emprole" name="emprole" required>
+                    <option value="">選択してください</option>
+                    <option value="1" ${formBean.role == 1 ? 'selected' : ''}>受付</option>
+                    <option value="2" ${formBean.role == 2 ? 'selected' : ''}>医師</option>
+                    <option value="3" ${formBean.role == 3 ? 'selected' : ''}>管理者</option>
+                </select>
+                <span id="roleError" class="error-message"></span>
+            </div>
 
-        <div class="form-group">
-            <label for="passwordConfirm">パスワード (確認):</label>
-            <input type="password" id="passwordConfirm" name="passwordConfirm" required>
-            <span id="passwordConfirmError" class="error-message">パスワードが一致しません。</span>
-        </div>
+            <div class="form-group">
+                <label for="password">パスワード:</label>
+                <input type="password" id="password" name="password" required>
+                <span id="passwordError" class="error-message"></span>
+            </div>
 
-        <button type="submit" class="button">確認画面へ</button>
-    </form>
+            <div class="form-group">
+                <label for="passwordConfirm">パスワード (確認):</label>
+                <input type="password" id="passwordConfirm" name="passwordConfirm" required>
+                <span id="passwordConfirmError" class="error-message"></span>
+            </div>
+
+            <button type="submit" class="button">確認画面へ</button>
+        </form>
+        <p style="margin-top:15px;"><a href="ReturnToMenuServlet">管理者メニューへ戻る</a></p>
+    </div>
 
 <script>
     const form = document.getElementById('registerForm');

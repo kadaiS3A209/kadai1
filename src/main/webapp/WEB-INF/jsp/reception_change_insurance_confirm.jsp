@@ -41,6 +41,7 @@
         </p>
 
         <form action="ReceptionChangeInsuranceServlet" method="post" style="display:inline-block; margin-right:10px;">
+            <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
             <input type="hidden" name="action" value="executeUpdate">
             <input type="hidden" name="patIdToChange" value="<c:out value='${patient.patId}'/>">
             <button type="submit" class="button">確定変更</button>

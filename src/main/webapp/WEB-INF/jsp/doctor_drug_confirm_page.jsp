@@ -87,6 +87,7 @@
 
                     <%-- 処置確定ボタン (D103 機能説明2) --%>
                     <form action="DoctorDrugAdministrationServlet" method="post" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                         <input type="hidden" name="action" value="confirmTreatment">
                         <input type="hidden" name="patientId" value="<c:out value='${patient.patId}'/>">
                         <button type="submit" class="button confirm-button">この内容で処置を確定する</button>

@@ -33,6 +33,7 @@
 
         <c:if test="${not empty tabyouinToChange}">
             <form action="AdminManageTabyouinServlet" method="post">
+                <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="updateTel">
                 <input type="hidden" name="tabyouinIdToChange" value="<c:out value='${tabyouinToChange.tabyouinId}'/>">
                 <%-- <input type="hidden" name="sourceList" value="<c:out value='${sourceList}'/>"> --%> <%-- 必要なら遷移元情報を引き継ぐ --%>

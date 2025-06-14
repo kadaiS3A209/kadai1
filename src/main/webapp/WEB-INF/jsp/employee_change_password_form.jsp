@@ -41,6 +41,7 @@
         <c:if test="${not empty requestScope.successMessage}"><div class="message success-message"><c:out value="${requestScope.successMessage}"/></div></c:if>
 
         <form id="changeOwnPasswordForm" action="EmployeeChangeOwnPasswordServlet" method="post">
+        	<input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
             <div class="form-group">
                 <label for="newPassword">新しいパスワード:</label>
                 <input type="password" id="newPassword" name="newPassword" required>

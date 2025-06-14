@@ -76,6 +76,7 @@
                 <h3>薬剤選択と数量</h3>
                 <c:if test="${not empty patient}">
                     <form action="DoctorDrugAdministrationServlet" method="post">
+                        <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                         <input type="hidden" name="action" value="addDrugToCart">
                         <input type="hidden" name="patientId" value="<c:out value='${patient.patId}'/>">
 
@@ -142,6 +143,7 @@
                                         <td>
                                             <%-- ★★★ 削除ボタンのためのフォームを追加 ★★★ --%>
                                             <form action="DoctorDrugAdministrationServlet" method="post" style="display:inline;">
+                                                <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                                                 <input type="hidden" name="action" value="removeDrugFromCart">
                                                 <input type="hidden" name="patientId" value="<c:out value='${patient.patId}'/>">
                                                 <input type="hidden" name="medicineIdToRemove" value="<c:out value='${item.medicineId}'/>">
@@ -154,6 +156,7 @@
                         </table>
                         <div class="button-bar">
                              <form action="DoctorDrugAdministrationServlet" method="post" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                                 <input type="hidden" name="action" value="goToConfirm">
                                 <input type="hidden" name="patientId" value="<c:out value='${patient.patId}'/>">
                                 <button type="submit" class="button button-confirm">指示内容の確認へ進む</button>

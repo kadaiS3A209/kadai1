@@ -31,6 +31,7 @@
 
         <c:if test="${not empty employeeToChange}">
             <form action="AdminManageEmployeesServlet" method="post">
+            	<input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="updateName">
                 <input type="hidden" name="empIdToChange" value="<c:out value='${employeeToChange.empid}'/>">
                 <input type="hidden" name="sourcePage" value="<c:out value='${sourcePage}'/>"> <%-- ★これを追加 --%>

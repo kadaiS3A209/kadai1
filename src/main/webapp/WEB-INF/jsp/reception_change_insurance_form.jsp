@@ -38,6 +38,7 @@
 
         <c:if test="${not empty patientToChange}">
             <form action="ReceptionChangeInsuranceServlet" method="post">
+                <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="confirmChange">
                 <input type="hidden" name="patIdToChange" value="<c:out value='${patientToChange.patId}'/>">
 

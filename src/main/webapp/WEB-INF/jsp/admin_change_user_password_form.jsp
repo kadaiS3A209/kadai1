@@ -49,6 +49,7 @@
 
         <c:if test="${not empty userToChange}">
             <form id="changePasswordForm" action="AdminChangeUserPasswordServlet" method="post">
+            	<input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="empIdToChange" value="<c:out value='${userToChange.empid}'/>">
                 <div class="form-group">
                     <label for="newPassword">新しいパスワード:</label>

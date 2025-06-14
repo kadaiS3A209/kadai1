@@ -55,6 +55,7 @@
         %>
 
         <form id="registerPatientForm" action="ReceptionRegisterPatientServlet" method="post">
+            <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
             <input type="hidden" name="action" value="confirm">
 
             <div class="form-group">

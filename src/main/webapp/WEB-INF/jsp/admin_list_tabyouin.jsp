@@ -36,6 +36,7 @@
 
         <div class="search-forms-container">
             <form class="search-form" action="AdminManageTabyouinServlet" method="post">
+                <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="searchAddress">
                 <label for="searchAddress">住所で検索:</label>
                 <input type="text" id="searchAddress" name="searchAddress" value="<c:out value='${searchedAddress}'/>" placeholder="住所の一部を入力">
@@ -43,6 +44,7 @@
             </form>
 
             <form class="search-form" action="AdminManageTabyouinServlet" method="post">
+                <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="searchCapital">
                 <label for="minCapital">資本金 (以上):</label>
                 <input type="text" id="minCapital" name="minCapital" value="<c:out value='${minCapitalInput}'/>" placeholder="例: 1000000">

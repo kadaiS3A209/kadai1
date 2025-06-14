@@ -1,5 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="model.ShiiregyoshaBean" %> <%-- パスを合わせる --%>
+<%-- JSTLのCoreライブラリを使用するための宣言を追加 --%>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ page import="model.ShiiregyoshaBean" %> <%-- jsp:useBeanで使用 --%>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,69 +13,76 @@
     .form-container { width: 500px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; }
-    input[type="text"], input[type="number"] { width: calc(100% - 18px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .error-message { color: red; font-size: 0.9em; margin-top: 3px; display: none; /* 初期非表示 */ }
+    input[type="text"], input[type="tel"], input[type="number"] { width: calc(100% - 18px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .error-message { color: red; font-size: 0.9em; margin-top: 3px; display: none; }
+    .error-message-server { color: red; background-color: #ffebeb; border: 1px solid #ffcdd2; padding: 8px; border-radius: 4px; margin-bottom: 10px; }
     .button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
     .button:hover { background-color: #0056b3; }
+    input.input-error { border-color: red; }
 </style>
 </head>
 <body>
     <div class="form-container">
         <h1>仕入先登録</h1>
 
-        <%
-            String formError = (String) request.getAttribute("formError");
-            if (formError != null) {
-        %>
-            <p style="color:red;"><%= formError %></p>
-        <%
-            }
-            // 確認画面から戻ってきた場合やエラー時の値を復元
-            ShiiregyoshaBean prevInput = (ShiiregyoshaBean) request.getAttribute("prevSupplierInput");
-            if (prevInput == null) { // セッションからも試みる (確認画面からの「修正」)
-                prevInput = (ShiiregyoshaBean) session.getAttribute("tempSupplier");
-            }
+        <%-- サーブレットからのエラーメッセージ表示 --%>
+        <c:if test="${not empty requestScope.formError}">
+            <p class="error-message-server">${requestScope.formError}</p>
+        </c:if>
 
-            String prevId = (prevInput != null && prevInput.getShiireId() != null) ? prevInput.getShiireId() : "";
-            String prevMei = (prevInput != null && prevInput.getShiireMei() != null) ? prevInput.getShiireMei() : "";
-            String prevAddr = (prevInput != null && prevInput.getShiireAddress() != null) ? prevInput.getShiireAddress() : "";
-            String prevTel = (prevInput != null && prevInput.getShiireTel() != null) ? prevInput.getShiireTel() : "";
-            String prevShihonkin = (prevInput != null && prevInput.getShihonkin() != 0) ? String.valueOf(prevInput.getShihonkin()) : (request.getParameter("shihonkin") != null ? request.getParameter("shihonkin") : "");
-            String prevNouki = (prevInput != null && prevInput.getNouki() != 0) ? String.valueOf(prevInput.getNouki()) : (request.getParameter("nouki") != null ? request.getParameter("nouki") : "");
+        <%--
+            フォームに表示する値を持つBeanを決定するロジック。
+            優先順位：
+            1. リクエストスコープの "prevSupplierInput" (バリデーションエラーで戻ってきた場合)
+            2. セッションスコープの "tempSupplier" (確認画面から「修正」で戻ってきた場合)
+            3. どちらもなければ、空のBean (新規作成時)
+        --%>
+        <c:choose>
+            <c:when test="${not empty requestScope.prevSupplierInput}">
+                <c:set var="formBean" value="${requestScope.prevSupplierInput}" scope="page" />
+            </c:when>
+            <c:when test="${not empty sessionScope.tempSupplier}">
+                <c:set var="formBean" value="${sessionScope.tempSupplier}" scope="page" />
+            </c:when>
+            <c:otherwise>
+                <jsp:useBean id="formBean" class="model.ShiiregyoshaBean" scope="page" />
+            </c:otherwise>
+        </c:choose>
 
-        %>
 
         <form id="addSupplierForm" action="AdminAddSupplierServlet" method="post" onsubmit="return validateSupplierForm()">
+            <%-- CSRF対策トークン --%>
+            <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
             <input type="hidden" name="action" value="confirm">
 
             <div class="form-group">
                 <label for="shiireid">仕入先ID (8桁以内):</label>
-                <input type="text" id="shiireid" name="shiireid" value="<%= prevId %>" required maxlength="8">
+                <input type="text" id="shiireid" name="shiireid" value="<c:out value='${formBean.shiireId}'/>" required maxlength="8">
                 <span id="shiireidError" class="error-message"></span>
             </div>
             <div class="form-group">
                 <label for="shiiremei">仕入先名:</label>
-                <input type="text" id="shiiremei" name="shiiremei" value="<%= prevMei %>" required>
+                <input type="text" id="shiiremei" name="shiiremei" value="<c:out value='${formBean.shiireMei}'/>" required>
                 <span id="shiiremeiError" class="error-message"></span>
             </div>
             <div class="form-group">
                 <label for="shiireaddress">住所:</label>
-                <input type="text" id="shiireaddress" name="shiireaddress" value="<%= prevAddr %>" required>
+                <input type="text" id="shiireaddress" name="shiireaddress" value="<c:out value='${formBean.shiireAddress}'/>" required>
                 <span id="shiireaddressError" class="error-message"></span>
             </div>
             <div class="form-group">
                 <label for="shiiretel">電話番号:</label>
-                <input type="text" id="shiiretel" name="shiiretel" value="<%= prevTel %>" required placeholder="例: 03-1234-5678">
+                <input type="tel" id="shiiretel" name="shiiretel" value="<c:out value='${formBean.shiireTel}'/>" required placeholder="例: 03-1234-5678">
                 <span id="shiiretelError" class="error-message"></span>
             </div>
             <div class="form-group">
                 <label for="shihonkin">資本金 (円):</label>
-                <input type="text" id="shihonkin" name="shihonkin" value="<%= prevShihonkin %>" required placeholder="例: 1000000 (カンマなし)">
+                <input type="text" id="shihonkin" name="shihonkin" value="<c:if test='${formBean.shihonkin != 0}'><c:out value='${formBean.shihonkin}'/></c:if>" required placeholder="例: 1000000 (カンマなし)">
                 <span id="shihonkinError" class="error-message"></span>
             </div>
             <div class="form-group">
                 <label for="nouki">納期 (日数):</label>
-                <input type="text" id="nouki" name="nouki" value="<%= prevNouki %>" required placeholder="例: 7">
+                <input type="text" id="nouki" name="nouki" value="<c:if test='${formBean.nouki != 0}'><c:out value='${formBean.nouki}'/></c:if>" required placeholder="例: 7">
                 <span id="noukiError" class="error-message"></span>
             </div>
 

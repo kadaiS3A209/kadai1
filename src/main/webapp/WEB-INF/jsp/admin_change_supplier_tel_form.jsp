@@ -34,6 +34,7 @@
 
         <c:if test="${not empty supplierToChange}">
             <form action="AdminListSuppliersServlet" method="post"> <%-- 送信先を一覧サーブレットに --%>
+            	<input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
                 <input type="hidden" name="action" value="updateTel">
                 <input type="hidden" name="shiireIdToChange" value="<c:out value='${supplierToChange.shiireId}'/>">
                 <input type="hidden" name="sourceList" value="<c:out value='${sourceList}'/>"> <%-- 遷移元情報を引き継ぐ --%>
