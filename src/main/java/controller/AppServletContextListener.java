@@ -6,13 +6,24 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Enumeration;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 // import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread; // ★この行は削除またはコメントアウト
+import jakarta.websocket.server.ServerContainer;
+import jakarta.websocket.server.ServerEndpointConfig;
+
+import websocket.GetHttpSessionConfigurator;
+import websocket.WhiteboardSocket;
 
 @WebListener
 public class AppServletContextListener implements ServletContextListener {
+	
+	
+	
+	
+	
 
     /**
      * アプリケーションのシャットダウン時に呼び出されるメソッド
@@ -58,7 +69,33 @@ public class AppServletContextListener implements ServletContextListener {
      * アプリケーションの起動時に呼び出されるメソッド (今回は特に処理なし)
      */
     @Override
-    public void contextInitialized(ServletContextEvent sce) {
-         System.out.println("アプリケーションが起動しました。");
+	public void contextInitialized(ServletContextEvent sce) {
+        System.out.println("アプリケーションが起動しました。WebSocketエンドポイントを設定します。");
+
+        // WebSocketのエンドポイントをプログラム的に登録
+        ServletContext context = sce.getServletContext();
+        ServerContainer serverContainer = (ServerContainer) context.getAttribute(ServerContainer.class.getName());
+
+        try {
+            // カスタムコンフィギュレータを使用してServerEndpointConfigを作成
+            ServerEndpointConfig config = ServerEndpointConfig.Builder
+                    .create(WhiteboardSocket.class, "/whiteboard")
+                    .configurator(new GetHttpSessionConfigurator())
+                    .build();
+
+            // WebSocketコンテナにエンドポイント設定を追加
+            serverContainer.addEndpoint(config);
+            System.out.println("Whiteboard WebSocketエンドポイントがプログラム的に登録されました。");
+
+            // メッセージバッファサイズを設定 (Tomcat 10.1の場合)
+            // この設定は ServerContainer のレベルで行う
+            // デフォルトのバッファサイズを変更 (単位: byte)
+            serverContainer.setDefaultMaxTextMessageBufferSize(1048576); // 1MB
+            System.out.println("WebSocketのテキストメッセージバッファサイズが1MBに設定されました。");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
