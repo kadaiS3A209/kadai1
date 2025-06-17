@@ -40,6 +40,7 @@
                 <li><a href="AdminListSuppliersServlet">仕入先管理</a></li>
                 <li><a href="AdminManageTabyouinServlet">他病院管理</a></li>
                 <li><a href="EmployeeChangeOwnPasswordServlet">自身のパスワード変更</a></li>
+                <li><a href="ShowWhiteboardServlet">リアルタイム共有メモ</a></li>
             </ul>
         </nav>
 

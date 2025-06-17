@@ -45,6 +45,10 @@ h2 { margin-top: 0; color: #555; border-bottom: 2px solid #eee; padding-bottom: 
 #memo-list-table th, #memo-list-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
 #memo-list-table th { background-color: #f2f2f2; }
 
+.user-list-container { flex: 1; }
+#user-list { list-style-type: none; padding-left: 0; }
+#user-list li { background-color: #e9f5ff; margin-bottom: 5px; padding: 8px; border-radius: 4px; }
+
 </style>
 </head>
 <body>
@@ -72,6 +76,12 @@ h2 { margin-top: 0; color: #555; border-bottom: 2px solid #eee; padding-bottom: 
             </div>
             <canvas id="whiteboard"></canvas>
         </div>
+        <div class="panel user-list-container">
+        <h3>接続中のユーザー (<span id="user-count">0</span>)</h3>
+        <ul id="user-list">
+            <%-- ユーザー名はここに動的に追加される --%>
+        </ul>
+    </div>
     </div>
     <div id="status">接続待機中...</div>
 
@@ -92,14 +102,16 @@ h2 { margin-top: 0; color: #555; border-bottom: 2px solid #eee; padding-bottom: 
 
 <script>
 $(document).ready(function() {
-    // --- 変数定義 ---
+	// --- 変数定義 ---
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     const contextPath = '<%= request.getContextPath() %>';
-    const wsUrl = protocol + '//' + host + contextPath + '/whiteboard';
+    const wsUrl = protocol + '//' + host + contextPath + '/whiteboard'; // ★ sessionIdパラメータは不要
+
+    console.log("接続先WebSocket URL: " + wsUrl); // デバッグ用
     
-    // jQueryオブジェクトのキャッシュ
     const $memoPad = $('#memo-pad'), $status = $('#status'), 
+          $userList = $('#user-list'), $userCount = $('#user-count'), // ユーザーリスト用
           $whiteboardContainer = $('.whiteboard-container'), $controls = $('.controls'),
           $colorPicker = $('#colorPicker'), $lineWidthPicker = $('#lineWidthPicker'), 
           $lineWidthValue = $('#lineWidthValue'), $penBtn = $('#pen-btn'), 
@@ -108,14 +120,11 @@ $(document).ready(function() {
           $loadListBtn = $('#load-list-btn'), $loadModal = $('#load-modal'),
           $currentMemoInfo = $('#current-memo-info');
 
-    // Canvas関連の変数
     const canvas = document.getElementById('whiteboard');
     const ctx = canvas.getContext('2d');
-
-    // 状態管理用の変数
+    
     let isDrawing = false, lastX = 0, lastY = 0, currentMode = 'pen';
-    let currentMemoId = null;
-    let currentMemoTitle = '無題のメモ';
+    let currentMemoId = null, currentMemoTitle = '無題のメモ';
     let ws;
 
     //================================================
@@ -131,7 +140,10 @@ $(document).ready(function() {
         $memoPad.val(data.text);
         if (data.image) {
             const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0);
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
             img.src = data.image;
         }
     };
@@ -209,9 +221,7 @@ $(document).ready(function() {
     //================================================
     // ★★★ WebSocketのセットアップとイベントハンドラ ★★★
     //================================================
-    try {
-        ws = new WebSocket(wsUrl);
-    } catch (e) {
+    try { ws = new WebSocket(wsUrl); } catch (e) {
         console.error("WebSocketの初期化に失敗しました。", e);
         $status.text('エラー: サーバーに接続できません').css('background-color', 'red');
         return;
@@ -226,21 +236,42 @@ $(document).ready(function() {
             const msg = JSON.parse(event.data);
             switch (msg.type) {
                 case 'text':
-                    if (document.activeElement !== $memoPad[0]) $memoPad.val(msg.data);
+                    if (document.activeElement !== $memoPad[0]) {
+                        $memoPad.val(msg.data);
+                    }
                     break;
                 case 'draw':
                     drawOnCanvas(msg.x1, msg.y1, msg.x2, msg.y2, msg.color, msg.lineWidth, msg.mode);
                     break;
+                case 'update_image': case 'load_image': {
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = msg.image;
+                    break;
+                }
+                case 'user_list_update': { // ★ユーザーリスト更新の処理
+                    $userList.empty();
+                    if (msg.users && msg.users.length > 0) {
+                        $userCount.text(msg.users.length);
+                        msg.users.forEach(userName => {
+                            const $li = $('<li></li>').text(userName);
+                            $userList.append($li);
+                        });
+                    } else {
+                        $userCount.text(0);
+                    }
+                    break;
+                }
                 case 'list_updated':
                     updateMemoListModal(msg.data);
                     break;
                 case 'load_memo_success':
-                    // msg.data ではなく、msg オブジェクト全体を渡す
-                    applyLoadedData(msg); 
-                    
-                    // 読み込んだメモのIDとタイトルを保持
-                    currentMemoId = msg.id;
-                    currentMemoTitle = msg.title;
+                    applyLoadedData(msg.data);
+                    currentMemoId = msg.data.id;
+                    currentMemoTitle = msg.data.title;
                     $currentMemoInfo.text('(ID: ' + currentMemoId + ' - ' + currentMemoTitle + ')');
                     break;
                 case 'save_success':
@@ -257,17 +288,38 @@ $(document).ready(function() {
                     currentMemoTitle = '無題のメモ';
                     $currentMemoInfo.text('(新規)');
                     break;
+                case 'error':
+                    alert('サーバーでエラーが発生しました: ' + msg.message);
+                    break;
             }
-        } catch(e) {
-            // ★重要★ JSON解析に失敗した場合、エラーと受信データをコンソールに出力
-            console.error("受信メッセージの解析に失敗しました:", e);
-            console.error("失敗したデータ:", event.data);
-        }
+        } catch(e) { console.error("受信メッセージの解析に失敗しました:", e); }
     };
     
     //================================================
     // ★★★ UIイベントハンドラ (User Interface Event Handlers) ★★★
     //================================================
+    $memoPad.on('input', () => ws.send(JSON.stringify({ type: 'text', data: $memoPad.val() })));
+    
+    $(canvas).on('mousemove touchmove', (e) => {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getMousePos(e);
+        // 自分の画面には即座に描画
+        drawOnCanvas(lastX, lastY, pos.x, pos.y, $colorPicker.val(), $lineWidthPicker.val(), currentMode);
+        // 他のユーザーには描画命令を送信
+        ws.send(JSON.stringify({ type: 'draw', x1: lastX, y1: lastY, x2: pos.x, y2: pos.y, color: $colorPicker.val(), lineWidth: $lineWidthPicker.val(), mode: currentMode }));
+        [lastX, lastY] = [pos.x, pos.y];
+    });
+
+    // マウスを離したときに、画像全体の状態をサーバーに送る (リロード対策)
+    $(canvas).on('mouseup touchend', () => {
+        if (isDrawing) {
+            isDrawing = false;
+            ws.send(JSON.stringify({ type: 'update_image', image: canvas.toDataURL() }));
+        }
+    });
+    
+    
     $newBtn.on('click', () => {
         if (confirm('現在の内容はクリアされます。よろしいですか？')) {
             ws.send(JSON.stringify({ type: 'clear' }));

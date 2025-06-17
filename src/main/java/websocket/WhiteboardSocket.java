@@ -1,13 +1,13 @@
-package websocket; // ご自身のパッケージ名に合わせてください
+package websocket; // ご自身のパッケージに合わせてください
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.http.HttpSession;
-import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.EndpointConfig; // onOpenで使うので残します
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
@@ -18,174 +18,130 @@ import jakarta.websocket.server.ServerEndpoint;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 
-import dao.MemoDAO; // DAOのパッケージに合わせてください
+import dao.MemoDAO;
+import model.EmployeeBean;
 
-// ▼▼▼ 修正点(1): maxTextMessageBufferSize を追加して、大きなデータ(画像)を扱えるようにする ▼▼▼
-@ServerEndpoint(value = "/whiteboard")
+// ▼▼▼ configuratorは使わない方式に変更します ▼▼▼
+@ServerEndpoint(value = "/whiteboard",configurator = GetHttpSessionConfigurator.class )
 public class WhiteboardSocket {
 
-    private static Set<Session> clients = new CopyOnWriteArraySet<>();
+    private static final Map<Session, String> clients = new ConcurrentHashMap<>();
+    private static String currentMemoText = "";
+    private static String currentWhiteboardImage = "";
     private static final Gson gson = new Gson();
 
     @OnOpen
-    public void onOpen(Session session, EndpointConfig config) { // ★ EndpointConfig を引数に追加
-        System.out.println("WebSocket connected: " + session.getId());
-        clients.add(session);
-
-        // ★ コンフィギュレータからHttpSessionを取得
+    public void onOpen(Session session, EndpointConfig config) {
+        String userName = "ゲスト";
+        
+        // ★★★ configurator経由でHttpSessionを取得する正しい方法 ★★★
         HttpSession httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
 
         if (httpSession != null && httpSession.getAttribute("loggedInUser") != null) {
-            // EmployeeBean user = (EmployeeBean) httpSession.getAttribute("loggedInUser");
-            // String userName = user.getEmplname() + " " + user.getEmpfname();
-            // System.out.println("接続ユーザー: " + userName);
-            // 誰かが接続したことを全員に通知する、などの処理も可能
-            // broadcast("{\"type\":\"user_connected\", \"userName\":\"" + userName + "\"}");
+            EmployeeBean user = (EmployeeBean) httpSession.getAttribute("loggedInUser");
+            userName = user.getEmplname() + " " + user.getEmpfname();
+        } else {
+             System.out.println("onOpen: HttpSessionまたはログイン情報が見つかりません。ゲストとして扱います。");
         }
+        
+        clients.put(session, userName);
+        System.out.println(userName + " が接続しました。現在の接続数: " + clients.size());
+        
+        sendCurrentState(session);
+        updateUserList();
     }
 
     @OnClose
     public void onClose(Session session) {
-        System.out.println("Connection closed: " + session.getId());
+        String userName = clients.remove(session);
+        System.out.println((userName != null ? userName : "不明なユーザー") + " の接続が切れました。現在の接続数: " + clients.size());
+        updateUserList();
+    }
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        System.err.println("WebSocketエラー発生: " + session.getId());
+        throwable.printStackTrace();
         clients.remove(session);
+        updateUserList();
     }
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        // ▼▼▼ 修正点(2): 処理全体をtry-catchで囲み、エラーで接続が切れるのを防ぐ ▼▼▼
+        // ★このメソッドの中身は変更なし。以前のままでOK
         try {
             JsonObject msg = JsonParser.parseString(message).getAsJsonObject();
             String type = msg.get("type").getAsString();
-
-            MemoDAO memoDAO = new MemoDAO();
-
+            
             switch (type) {
                 case "text":
                 case "draw":
+                case "update_image":
                 case "clear":
-                    // これらのメッセージは単純に全クライアントにブロードキャスト
-                    broadcast(message);
+                    updateStateAndBroadcast(msg, session);
                     break;
-
-                case "save_as": {
-                    String title = msg.get("title").getAsString();
-                    String text = msg.get("text").getAsString();
-                    String image = msg.get("image").getAsString();
-                    
-                    int newId = memoDAO.saveMemoAs(title, text, image); // ★戻り値(int)を受け取るように修正
-                    if (newId != -1) { // 成功した場合 (IDが返ってくる)
-                        String successMsg = "{\"type\":\"save_success\", \"newId\":" + newId + ", \"newTitle\":\"" + title + "\"}";
-                        sendToSession(session, successMsg);
-                        broadcast("{\"type\":\"list_updated\", \"data\":" + gson.toJson(memoDAO.getMemoList()) + "}");
-                    } else {
-                        sendToSession(session, "{\"type\":\"error\", \"message\":\"名前を付けて保存に失敗しました。\"}");
-                    }
+                case "save_as": 
+                case "save_overwrite":
+                    handleSave(msg, session);
                     break;
-                }
-                
-             // ▼▼▼ この "save_overwrite" の case ブロックを新しく追加します ▼▼▼
-                case "save_overwrite": {
-                    int id = msg.get("id").getAsInt();
-                    String title = msg.get("title").getAsString();
-                    String text = msg.get("text").getAsString();
-                    String image = msg.get("image").getAsString();
-
-                    // DAOの新しいupdateメソッドを呼び出す
-                    boolean success = memoDAO.update(id, title, text, image);
-                    
-                    if (success) {
-                        // 上書き保存成功をクライアントに通知
-                        sendToSession(session, "{\"type\":\"save_success\"}"); // newIdは不要
-                        // 他のクライアントの一覧表示も更新するためにブロードキャスト
-                        broadcast("{\"type\":\"list_updated\", \"data\":" + gson.toJson(memoDAO.getMemoList()) + "}");
-                    } else {
-                        // (任意) 更新失敗をクライアントに通知
-                        sendToSession(session, "{\"type\":\"error\", \"message\":\"上書き保存に失敗しました。\"}");
-                    }
+                case "load_memo":
+                    handleLoad(msg);
                     break;
-                }
-                // ▲▲▲ ここまで追加 ▲▲▲
-
-                case "get_list": {
-                    List<Map<String, Object>> list = memoDAO.getMemoList();
-                    sendToSession(session, Map.of("type", "list_updated", "data", list));
+                case "get_list":
+                    MemoDAO dao = new MemoDAO();
+                    List<Map<String, Object>> list = dao.getMemoList();
+                    sendToSession(session, "{\"type\":\"list_updated\", \"data\":" + gson.toJson(list) + "}");
                     break;
-                }
-                
-                case "load_memo": {
-                    int id = msg.get("id").getAsInt();
-                    Map<String, Object> dataMap = memoDAO.loadMemoById(id); // DAOの戻り値の型に合わせる
-
-                    if (dataMap != null) {
-                        // ▼▼▼ この部分を修正 ▼▼▼
-                        // MapからJsonObjectを構築し、typeを追加
-                        JsonObject responseJson = new JsonObject();
-                        responseJson.addProperty("type", "load_memo_success");
-                        responseJson.addProperty("id", (Integer) dataMap.get("id"));
-                        responseJson.addProperty("title", (String) dataMap.get("title"));
-                        responseJson.addProperty("text", (String) dataMap.get("text"));
-                        responseJson.addProperty("image", (String) dataMap.get("image"));
-
-                        // 構築したJsonObjectをブロードキャスト
-                        broadcast(gson.toJson(responseJson));
-                        // ▲▲▲ ここまで修正 ▲▲▲
-                    }
+                case "get_user_list":
+                    updateUserList();
                     break;
-                }
             }
-        } catch (JsonSyntaxException e) {
-            System.err.println("JSONの解析に失敗しました: " + message);
         } catch (Exception e) {
-            // ★重要: DBエラーなど、予期せぬ例外がここでキャッチされ、接続断を防ぎます
-            System.err.println("メッセージ処理中に予期せぬエラーが発生しました。");
             e.printStackTrace();
-            // (任意) エラーが発生したことをクライアントに通知する
-            try {
-                if(session.isOpen()) {
-                    session.getBasicRemote().sendText("{\"type\":\"error\", \"message\":\"サーバーエラーが発生しました。\"}");
-                }
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
-        }
-        // ▲▲▲ try-catchブロックの終わり ▲▲▲
-    }
-
-    @OnError
-    public void onError(Session session, Throwable throwable) {
-    	System.err.println("★ WebSocket onError が呼び出されました！ Session ID: " + session.getId());
-        System.err.println("★ エラー内容: " + throwable.getMessage());
-        System.err.println("Error on session " + session.getId());
-        throwable.printStackTrace();
-        clients.remove(session);
-    }
-
-    // ... (broadcast, sendToSession, handleFailedTransmission メソッドは変更なし) ...
-    private void broadcast(String jsonMessage) {
-        for (Session client : clients) {
-            if (client.isOpen()) {
-                try {
-                    client.getBasicRemote().sendText(jsonMessage);
-                } catch (IOException e) {
-                    handleFailedTransmission(client, e);
-                }
-            }
-        }
-    }
-
-    private void sendToSession(Session session, Map<String, Object> data) {
-        if (session != null && session.isOpen()) {
-            try {
-                session.getBasicRemote().sendText(gson.toJson(data));
-            } catch (IOException e) {
-                handleFailedTransmission(session, e);
-            }
         }
     }
     
-    private void sendToSession(Session session, String jsonMessage) {
+
+    /**
+     * 新規接続者に現在のメモとホワイトボードの状態を送信する
+     */
+    private static void handleLoad(JsonObject msg) {
+        MemoDAO dao = new MemoDAO();
+        int id = msg.get("id").getAsInt();
+        Map<String, Object> data = dao.loadMemoById(id);
+        if (data != null) {
+            currentMemoText = (String) data.get("text");
+            currentWhiteboardImage = (String) data.get("image");
+            data.put("type", "load_memo_success");
+            broadcast(gson.toJson(data), null);
+        }
+    }
+
+    private static void sendCurrentState(Session session) {
+        sendToSession(session, "{\"type\":\"text\", \"data\":" + gson.toJson(currentMemoText) + "}");
+        if (currentWhiteboardImage != null && !currentWhiteboardImage.isEmpty()) {
+            sendToSession(session, "{\"type\":\"load_image\", \"image\":\"" + currentWhiteboardImage + "\"}");
+        }
+    }
+
+    private static void updateUserList() {
+        List<String> userNames = new ArrayList<>(clients.values());
+        System.out.println("現在の接続者リストを更新します: " + userNames); // ★デバッグログ追加
+        String jsonMessage = "{\"type\":\"user_list_update\", \"users\":" + gson.toJson(userNames) + "}";
+        broadcast(jsonMessage, null);
+    }
+    
+    private static void broadcast(String jsonMessage, Session senderSession) {
+        System.out.println("ブロードキャスト実行 (送信元: " + (senderSession != null ? senderSession.getId() : "全員") + ")"); // ★デバッグログ追加
+        clients.keySet().forEach(client -> {
+            if (senderSession != null && client.equals(senderSession)) {
+                return;
+            }
+            sendToSession(client, jsonMessage);
+        });
+    }
+    
+    private  static void sendToSession(Session session, String jsonMessage) {
         if (session != null && session.isOpen()) {
             try {
                 session.getBasicRemote().sendText(jsonMessage);
@@ -195,8 +151,80 @@ public class WhiteboardSocket {
         }
     }
     
-    private void handleFailedTransmission(Session client, IOException e) {
-        System.err.println("Error sending message to " + client.getId() + ", removing session.");
+    private static void handleFailedTransmission(Session client, IOException e) {
+        System.err.println("メッセージ送信失敗: " + client.getId());
         clients.remove(client);
+    }
+    
+	/*   private static String getHttpSessionIdFromQuery(Session session) {
+	    String queryString = session.getQueryString();
+	    if (queryString != null && queryString.startsWith("sessionId=")) {
+	        return queryString.substring("sessionId=".length());
+	    }
+	    return null;
+	}*/
+    
+    /**
+     * ★★★ 新しく追加する handleSave メソッド ★★★
+     * 「名前を付けて保存」と「上書き保存」の共通処理を行います。
+     * @param msg クライアントから受信したJSONオブジェクト
+     * @param session メッセージを送信したクライアントのセッション
+     */
+    private static  void handleSave(JsonObject msg, Session session) {
+        String type = msg.get("type").getAsString();
+        String title = msg.get("title").getAsString();
+        String text = msg.get("text").getAsString();
+        String image = msg.get("image").getAsString();
+        MemoDAO dao = new MemoDAO();
+        boolean dbSuccess = false;
+        int newId = -1;
+
+        if ("save_as".equals(type)) {
+            newId = dao.saveMemoAs(title, text, image); // DAOの戻り値(int)を受け取る
+            dbSuccess = (newId != -1);
+        } else if ("save_overwrite".equals(type)) {
+            int id = msg.get("id").getAsInt();
+            dbSuccess = dao.update(id, title, text, image); // DAOの戻り値(boolean)を受け取る
+        }
+
+        if (dbSuccess) {
+            // 成功メッセージを生成
+            String successMsg = ("save_as".equals(type))
+                ? "{\"type\":\"save_success\", \"newId\":" + newId + ", \"newTitle\":\"" + title + "\"}"
+                : "{\"type\":\"save_success\"}";
+            
+            // 操作した本人に成功を通知
+            sendToSession(session, successMsg);
+            
+            // 全員にリストの更新を通知
+            broadcast("{\"type\":\"list_updated\", \"data\":" + gson.toJson(dao.getMemoList()) + "}", null);
+        } else {
+            // 失敗を通知
+            sendToSession(session, "{\"type\":\"error\", \"message\":\"保存に失敗しました。\"}");
+        }
+    }
+
+    /**
+     * ★ onMessageをシンプルにするため、編集系メッセージの処理をまとめたメソッド
+     */
+    private static  void updateStateAndBroadcast(JsonObject msg, Session session) {
+        String type = msg.get("type").getAsString();
+        
+        switch (type) {
+            case "text":
+                currentMemoText = msg.get("data").getAsString();
+                break;
+            case "update_image":
+                currentWhiteboardImage = msg.get("image").getAsString();
+                break;
+            case "clear":
+                currentMemoText = "";
+                currentWhiteboardImage = "";
+                break;
+        }
+        // "draw" は状態を保持しないので、ここでは何もしない
+        
+        // 送信者以外にブロードキャスト
+        broadcast(gson.toJson(msg), session);
     }
 }

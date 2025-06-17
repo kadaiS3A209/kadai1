@@ -13,55 +13,118 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import model.EmployeeBean;
+
 /**
  * ログイン認証を確認するフィルタ
  */
-// ★保護したいURLパターンをここに記述します
+//▼▼▼ このアノテーション全体を、以下の内容で置き換えてください ▼▼▼
 @WebFilter(urlPatterns = {
-	    "/Admin/*",      // Adminで始まるサーブレットすべて
-	    "/Reception/*",  // Receptionで始まるサーブレットすべて
-	    "/Doctor/*",     // Doctorで始まるサーブレットすべて
-	    "/ReturnToMenuServlet",
-	    "/EmployeeChangeOwnPasswordServlet",
-	    "/WEB-INF/jsp/*" // WEB-INF/jsp/ 以下のすべてのファイル
-	})
+ /* ----- 管理者機能サーブレット ----- */
+ "/AdminAddSupplierServlet",
+ "/AdminAddTabyouinServlet",
+ "/AdminChangeUserPasswordServlet",
+ "/AdminListAdministratorsServlet",
+ "/AdminListStaffServlet",
+ "/AdminManageEmployeesServlet",
+ "/AdminManageSuppliersServlet",
+ "/AdminManageTabyouinServlet",
+
+ /* ----- 受付機能サーブレット ----- */
+ "/ReceptionChangeInsuranceServlet",
+ "/ReceptionListPatientsServlet",
+ "/ReceptionRegisterPatientServlet",
+
+ /* ----- 医師機能サーブレット ----- */
+ "/DoctorDrugAdministrationServlet",
+ "/DoctorListAllPatientsServlet",
+ "/DoctorViewTreatmentHistoryServlet",
+
+ /* ----- 共通機能サーブレット（ログイン後） ----- */
+ "/ReturnToMenuServlet",
+ "/EmployeeChangeOwnPasswordServlet",
+ "/ShowWhiteboardServlet"
+})
 public class AuthenticationFilter extends HttpFilter implements Filter {
+ // ... クラスの中身は次のステップで修正 ...
 
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-         
-        
-        String requestURI = httpRequest.getRequestURI();
 
-        
-        // ★★★ 除外設定を追加 ★★★
-        // ログインページ、ログアウト処理、CSSやJSなどのリソースはフィルタをバイパスさせる
-        if (requestURI.endsWith("/LoginServlet") || 
-            requestURI.endsWith("/LogoutServlet") || 
-            requestURI.contains("/css/") || 
-            requestURI.contains("/js/")) {
-            chain.doFilter(request, response);
-            return;
-        }
+//AuthenticationFilter.java の doFilter メソッド全体を、この内容で上書きしてください
 
-        HttpSession session = httpRequest.getSession(false);// 既存のセッションを取得（なければnull）
+@Override
+public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+ HttpServletRequest httpRequest = (HttpServletRequest) request;
+ HttpServletResponse httpResponse = (HttpServletResponse) response;
+ 
+ String servletPath = httpRequest.getServletPath(); // ★リクエストされたサーブレットのパスを取得
 
-        // ログインしているかどうかをチェック
-        boolean isLoggedIn = (session != null && session.getAttribute("loggedInUser") != null);
+ // ★ログ1: どのURLにアクセスしようとしているか確認
+ System.out.println("--- AuthenticationFilter ---");
+ System.out.println("Servlet Path: " + servletPath);
 
-        if (isLoggedIn) {
-            // ログインしている場合は、リクエストを続行させる
-            // ★ブラウザキャッシュ無効化ヘッダーを追加
-            httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
-            httpResponse.setHeader("Pragma", "no-cache"); // HTTP 1.0.
-            httpResponse.setDateHeader("Expires", 0); // Proxies.
-            
-            chain.doFilter(request, response);
-        } else {
-            // ログインしていない場合は、ログインページにリダイレクト
-            System.out.println("認証フィルタ: 未ログインのためログインページにリダイレクトします。");
-            httpResponse.sendRedirect(httpRequest.getContextPath() + "/LoginServlet");
-        }
-    }
+ // ログインページ、ログアウト処理などはフィルタをバイパス
+ if ("/LoginServlet".equals(servletPath) || 
+     "/LogoutServlet".equals(servletPath) ||
+     servletPath.startsWith("/css/") || 
+     servletPath.startsWith("/js/")) {
+     System.out.println("Bypass: ログイン/ログアウト/リソースへのアクセスです。");
+     chain.doFilter(request, response);
+     return;
+ }
+
+ HttpSession session = httpRequest.getSession(false);
+
+ // ★ログインチェック
+ if (session == null || session.getAttribute("loggedInUser") == null) {
+     System.out.println("判定: 未ログインです。ログインページにリダイレクトします。");
+     httpResponse.sendRedirect(httpRequest.getContextPath() + "/LoginServlet");
+     return;
+ }
+
+ // ★ロールチェック
+ EmployeeBean loggedInUser = (EmployeeBean) session.getAttribute("loggedInUser");
+ int userRole = loggedInUser.getRole();
+ System.out.println("判定: ログイン済みです。ユーザーロール: " + userRole);
+
+ // ▼▼▼ ロールチェックのロジックを修正 ▼▼▼
+ // 管理者ページへのアクセスチェック
+ if (servletPath.startsWith("/Admin")) { // サーブレットパスが "/Admin" で始まるか
+     System.out.println("チェック: 管理者機能へのアクセスです。");
+     if (userRole != 3) { // 管理者ロール(ID:3)でなければ
+         System.err.println("★不正アクセス検知★: 管理者機能へのアクセス (ユーザーロール: " + userRole + ") -> アクセスを拒否します。");
+         httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "アクセスが許可されていません。");
+         return;
+     }
+ }
+
+ // 受付ページへのアクセスチェック
+ if (servletPath.startsWith("/Reception")) { // サーブレットパスが "/Reception" で始まるか
+     System.out.println("チェック: 受付機能へのアクセスです。");
+     if (userRole != 1) { // 受付ロール(ID:1)でなければ
+         System.err.println("★不正アクセス検知★: 受付機能へのアクセス (ユーザーロール: " + userRole + ") -> アクセスを拒否します。");
+         httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "アクセスが許可されていません。");
+         return;
+     }
+ }
+ 
+ // 医師ページへのアクセスチェック
+ if (servletPath.startsWith("/Doctor")) { // サーブレットパスが "/Doctor" で始まるか
+     System.out.println("チェック: 医師機能へのアクセスです。");
+     if (userRole != 2) { // 医師ロール(ID:2)でなければ
+         System.err.println("★不正アクセス検知★: 医師機能へのアクセス (ユーザーロール: " + userRole + ") -> アクセスを拒否します。");
+         httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "アクセスが許可されていません。");
+         return;
+     }
+ }
+ // ▲▲▲ ここまで修正 ▲▲▲
+
+ System.out.println("フィルタのチェックを通過しました。");
+ // 全てのチェックを通過した場合、リクエストを続行
+ httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+ httpResponse.setHeader("Pragma", "no-cache");
+ httpResponse.setDateHeader("Expires", 0);
+ 
+ chain.doFilter(request, response);
+}
+
 }

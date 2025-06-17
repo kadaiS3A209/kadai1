@@ -38,6 +38,7 @@
                 <li><a href="ReceptionRegisterPatientServlet">新規患者登録</a></li>
                 <li><a href="ReceptionListPatientsServlet">患者一覧・検索・保険証変更</a></li>
                 <li><a href="EmployeeChangeOwnPasswordServlet">自身のパスワード変更</a></li>
+                <li><a href="ShowWhiteboardServlet">リアルタイム共有メモ</a></li>
             </ul>
         </nav>
 
