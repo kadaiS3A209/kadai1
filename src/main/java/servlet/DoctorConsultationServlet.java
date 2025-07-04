@@ -14,6 +14,7 @@ import listener.MasterDataManager;
 import model.LabTestBean;
 import model.PatientBean;
 import model.ConsultationBean; // 作成したBeanをインポート
+import model.EmployeeBean; // セッションから医師IDを取得するために使用
 
 @WebServlet("/DoctorConsultationServlet")
 public class DoctorConsultationServlet extends HttpServlet {
