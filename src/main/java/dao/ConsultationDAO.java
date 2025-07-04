@@ -122,5 +122,41 @@ public class ConsultationDAO {
         return consultation;
     }
 
+    /**
+     * ★追加: 特定の患者の、確定診断済みの診察（疾病名あり）を全て取得します。
+     * 疾病名も一緒に取得するためにdiseasesマスタ（の代わりのMasterDataManager）と連携します。
+     * @param patientId 患者ID
+     * @return 診察情報のリスト
+     */
+    public List<ConsultationBean> findCompletedConsultationsByPatientId(int patientId) {
+        List<ConsultationBean> list = new ArrayList<>();
+        // disease_codeがNULLでないものを取得
+        String sql = "SELECT * FROM consultations WHERE patient_id = ? AND disease_code IS NOT NULL ORDER BY consultation_date DESC";
+        
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, patientId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ConsultationBean c = new ConsultationBean();
+                    c.setConsultationId(rs.getInt("consultation_id"));
+                    c.setPatientId(rs.getInt("patient_id"));
+                    c.setDoctorId(rs.getInt("doctor_id"));
+                    c.setConsultationDate(rs.getDate("consultation_date"));
+                    c.setDiseaseCode(rs.getString("disease_code"));
+                    // ★疾病名をMasterDataManagerから補完
+                    DiseaseBean disease = MasterDataManager.findDiseaseByCode(c.getDiseaseCode());
+                    if (disease != null) {
+                        c.setDiseaseName(disease.getName());
+                    }
+                    list.add(c);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     // 今後、診察情報を更新・取得するためのメソッドをここに追加していきます。
 }
