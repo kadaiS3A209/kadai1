@@ -9,5 +9,7 @@ public class ConsultationBean {
     private Date consultationDate;
     private String diseaseCode;
     private String status;
+    private String patientName; // 患者名(姓 名)
+    private String diseaseName; // 疾病名
     // Getters and Setters for all fields...
 }
