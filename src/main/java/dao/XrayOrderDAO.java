@@ -242,6 +242,34 @@ public class XrayOrderDAO {
         return result;
     }
 
+    /**
+     * ★追加: consultation_id を使ってレントゲン指示情報を取得します。
+     * @param consultationId 診察ID
+     * @return XrayOrderBean オブジェクト。見つからなければnull。
+     */
+    public XrayOrderBean findByConsultationId(int consultationId) {
+        XrayOrderBean order = null;
+        String sql = "SELECT * FROM xray_orders WHERE consultation_id = ?";
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, consultationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    order = new XrayOrderBean();
+                    order.setXrayOrderId(rs.getInt("xray_order_id"));
+                    order.setConsultationId(rs.getInt("consultation_id"));
+                    order.setOrderStatus(rs.getString("order_status"));
+                    order.setTechnicianId(rs.getObject("technician_id", Integer.class)); // null許容
+                    order.setOrderedAt(rs.getTimestamp("ordered_at"));
+                    order.setCompletedAt(rs.getTimestamp("completed_at"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return order;
+    }
+
 
 
 }
