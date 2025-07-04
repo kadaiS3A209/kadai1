@@ -74,5 +74,27 @@ public class ConsultationDAO {
         return consultation;
     }
 
+
+    /**
+     * ★追加: 診察に疾病名と新しいステータスを登録（更新）します。
+     * @param consultationId 更新対象の診察ID
+     * @param diseaseCode 登録する疾病コード
+     * @param newStatus 新しい診察ステータス（例: "完了"）
+     * @return 更新に成功した場合は true
+     */
+    public boolean updateDiseaseAndStatus(int consultationId, String diseaseCode, String newStatus) {
+        String sql = "UPDATE consultations SET disease_code = ?, status = ? WHERE consultation_id = ?";
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, diseaseCode);
+            ps.setString(2, newStatus);
+            ps.setInt(3, consultationId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // 今後、診察情報を更新・取得するためのメソッドをここに追加していきます。
 }
