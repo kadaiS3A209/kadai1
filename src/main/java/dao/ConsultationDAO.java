@@ -96,5 +96,31 @@ public class ConsultationDAO {
         }
     }
 
+    public ConsultationBean getConsultationById(int consultationId) {
+        ConsultationBean consultation = null;
+        String sql = "SELECT * FROM consultations WHERE consultation_id = ?";
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, consultationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    consultation = new ConsultationBean();
+                    // ▼▼▼ ここからが具体的なセット処理です ▼▼▼
+                    consultation.setConsultationId(rs.getInt("consultation_id"));
+                    consultation.setPatientId(rs.getInt("patient_id"));
+                    consultation.setDoctorId(rs.getInt("doctor_id"));
+                    consultation.setConsultationDate(rs.getDate("consultation_date"));
+                    consultation.setDiseaseCode(rs.getString("disease_code"));
+                    consultation.setStatus(rs.getString("status"));
+                    // ▲▲▲ ここまで ▲▲▲
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return consultation;
+    }
+
     // 今後、診察情報を更新・取得するためのメソッドをここに追加していきます。
 }
