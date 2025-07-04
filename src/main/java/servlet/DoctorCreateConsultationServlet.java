@@ -55,8 +55,38 @@ public class DoctorCreateConsultationServlet extends HttpServlet {
 
         EmployeeBean doctor = (EmployeeBean) session.getAttribute("loggedInUser");
         int doctorId = Integer.parseInt(doctor.getEmpid());
-
         int patientId = Integer.parseInt(request.getParameter("patientId"));
+        
+        ConsultationDAO consultationDao = new ConsultationDAO();
+
+        // ▼▼▼ ★★★ ここからが追加するチェックロジック ★★★ ▼▼▼
+        // 新しい診察を作成する前に、この患者に未完了の診察が本当にないか最終確認
+        ConsultationBean existingIncomplete = consultationDao.findIncompleteConsultationByPatientId(patientId);
+
+        if (existingIncomplete != null) {
+            // もし、この時点で未完了の診察が存在する場合（例：別のタブで操作していたなど）
+            // 新規作成は行わず、エラーメッセージと共に既存の診察状況画面に遷移させる
+            System.err.println("エラー: 患者ID " + patientId + " には、未完了の診察ID " + existingIncomplete.getConsultationId() + " が既に存在するため、新規指示は作成できません。");
+            
+            request.setAttribute("errorMessage_consultation", "この患者には、まだ完了していない診察（指示ID: " + existingIncomplete.getConsultationId() + "）が存在します。新しい指示は追加できません。");
+
+            // 状況画面を再表示するために必要なデータを取得してセット
+            request.setAttribute("consultation", existingIncomplete);
+            request.setAttribute("patient", new PatientDAO().getPatientById(String.valueOf(patientId)));
+            request.setAttribute("xrayOrder", new XrayOrderDAO().findByConsultationId(existingIncomplete.getConsultationId()));
+            LabTestOrderDAO labDao = new LabTestOrderDAO();
+            LabTestOrderBean labOrder = labDao.findParentOrderByConsultationId(existingIncomplete.getConsultationId());
+            if (labOrder != null) {
+                 List<LabTestItemBean> items = labDao.getLabTestItemsByOrderId(labOrder.getLabTestOrderId());
+                 // ... (必要ならマスタ情報を補完するロジック) ...
+                 labOrder.setTestItems(items);
+            }
+            request.setAttribute("labOrder", labOrder);
+
+            request.getRequestDispatcher("/WEB-INF/jsp/doctor_consultation_status.jsp").forward(request, response);
+            return; // ★処理をここで中断
+        }
+        // ▲▲▲ ここまで追加 ▲▲▲
         boolean xrayOrdered = "true".equals(request.getParameter("xrayOrder"));
         String[] selectedTestCodes = request.getParameterValues("testCodes");
 
