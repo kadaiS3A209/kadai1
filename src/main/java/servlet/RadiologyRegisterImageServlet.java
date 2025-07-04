@@ -56,54 +56,67 @@ public class RadiologyRegisterImageServlet extends HttpServlet {
         int xrayOrderId = Integer.parseInt(request.getParameter("xrayOrderId"));
         
         List<String> savedFileNames = new ArrayList<>();
+        List<String> rejectedFileNames = new ArrayList<>(); // ★却下されたファイル名を保持するリスト
 
         try {
-            // --- 1. アップロードされたファイルを取得 ---
             for (Part filePart : request.getParts()) {
-                // "fileUpload" というname属性を持つ、かつファイルが選択されているものだけを処理
                 if ("fileUpload".equals(filePart.getName()) && filePart.getSize() > 0) {
-                    String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // ファイル名を取得
-
-                    // --- 2. 安全なファイル名を生成 ---
-                    // 同じファイル名での上書きを防ぎ、ファイル名を推測されにくくするために、UUIDなどでユニークな名前を生成
-                    String extension = submittedFileName.substring(submittedFileName.lastIndexOf("."));
-                    String uniqueFileName = UUID.randomUUID().toString() + extension;
-                    savedFileNames.add(uniqueFileName); // DBに保存するのはこのユニークなファイル名
-
-                    // --- 3. ファイルをサーバーのディスクに保存 ---
-                    File uploadDir = new File(UPLOAD_DIRECTORY);
-                    if (!uploadDir.exists()) {
-                        uploadDir.mkdirs(); // 保存用ディレクトリがなければ作成
-                    }
-                    File file = new File(UPLOAD_DIRECTORY + File.separator + uniqueFileName);
+                    String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
                     
-                    try (InputStream input = filePart.getInputStream()) {
-                        Files.copy(input, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        System.out.println("ファイルが保存されました: " + file.getAbsolutePath());
+                    // ▼▼▼ ★★★ ここからが追加・修正箇所 ★★★ ▼▼▼
+                    
+                    // 1. コンテントタイプを取得
+                    String contentType = filePart.getContentType();
+                    System.out.println("アップロードされたファイル: " + submittedFileName + ", コンテントタイプ: " + contentType); // デバッグ用
+
+                    // 2. コンテントタイプが画像であるかを確認
+                    if (contentType != null && contentType.startsWith("image/")) {
+                        // 許可された画像ファイルの場合のみ保存処理を行う
+                        String extension = submittedFileName.substring(submittedFileName.lastIndexOf("."));
+                        String uniqueFileName = UUID.randomUUID().toString() + extension;
+                        savedFileNames.add(uniqueFileName);
+
+                        File uploadDir = new File(UPLOAD_DIRECTORY);
+                        if (!uploadDir.exists()) uploadDir.mkdirs();
+                        File file = new File(UPLOAD_DIRECTORY + File.separator + uniqueFileName);
+                        
+                        try (InputStream input = filePart.getInputStream()) {
+                            Files.copy(input, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    } else {
+                        // 画像以外のファイルだった場合は、処理をスキップし、却下リストに追加
+                        rejectedFileNames.add(submittedFileName);
                     }
+                    // ▲▲▲ ここまで追加・修正 ▲▲▲
                 }
             }
 
-            // --- 4. バリデーションとDB登録 ---
+            // バリデーションとDB登録
             if (savedFileNames.isEmpty()) {
-                throw new ServletException("ファイルが1つも選択されていません。");
+                String errorMessage = "画像ファイルが1つも選択されていません。";
+                if (!rejectedFileNames.isEmpty()) {
+                    errorMessage += " 却下されたファイル: " + String.join(", ", rejectedFileNames);
+                }
+                throw new ServletException(errorMessage);
             }
             
             XrayOrderDAO dao = new XrayOrderDAO();
             boolean success = dao.completeXrayOrder(xrayOrderId, technicianId, savedFileNames);
 
             if (success) {
-                session.setAttribute("listSuccessMessage", "指示ID: " + xrayOrderId + " の写真登録を完了しました。");
+                String successMessage = "指示ID: " + xrayOrderId + " の写真登録を完了しました。";
+                if (!rejectedFileNames.isEmpty()) {
+                    successMessage += " (注意: " + String.join(", ", rejectedFileNames) + " は画像ファイルではないため無視されました)";
+                }
+                session.setAttribute("listSuccessMessage", successMessage);
                 response.sendRedirect("RadiologyOrderListServlet");
             } else {
                 throw new ServletException("データベースへの登録に失敗しました。");
             }
 
         } catch (Exception e) {
-            // エラー処理
             e.printStackTrace();
             request.setAttribute("formError", "登録処理中にエラーが発生しました: " + e.getMessage());
-            // エラー時もフォームを再表示するために必要な情報を再度セット
             XrayOrderDAO dao = new XrayOrderDAO();
             request.setAttribute("orderDetails", dao.getXrayOrderDetailsById(xrayOrderId));
             request.getRequestDispatcher("/WEB-INF/jsp/radiology_register_image_form.jsp").forward(request, response);
