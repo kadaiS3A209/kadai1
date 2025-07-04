@@ -76,5 +76,57 @@ public class DoctorConsultationServlet extends HttpServlet {
         }
     }
 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession(false);
+
+        // ログイン・権限チェック
+        if (session == null || session.getAttribute("loggedInUser") == null || ((EmployeeBean) session.getAttribute("loggedInUser")).getRole() != 2) {
+            response.sendRedirect("LoginServlet");
+            return;
+        }
+
+        String action = request.getParameter("action");
+
+        if ("registerDisease".equals(action)) {
+            // フォームから送信されたデータを取得
+            int consultationId = Integer.parseInt(request.getParameter("consultationId"));
+            String diseaseCode = request.getParameter("diseaseCode");
+
+            // バリデーション: 疾病名が選択されているか
+            if (diseaseCode == null || diseaseCode.trim().isEmpty()) {
+                request.setAttribute("formError_disease", "疾病名を選択してください。");
+                
+                // ★エラーメッセージと共に、状況確認画面を再表示するためのデータを再度取得・セット
+                // (doGetのロジックを再利用するか、ヘルパーメソッド化するのが望ましい)
+                // ここでは、簡単のため主要な情報のみを再セットする例を示します。
+                // この部分はdoGetのロジックを参考に、必要な情報を全てセットしてください。
+                ConsultationDAO consultationDao = new ConsultationDAO();
+                request.setAttribute("consultation", consultationDao.getConsultationById(consultationId)); // consultationIdで診察情報を再取得するメソッドがDAOに必要
+                request.setAttribute("xrayOrder", new XrayOrderDAO().findByConsultationId(consultationId));
+                request.setAttribute("labOrder", new LabTestOrderDAO().findParentOrderByConsultationId(consultationId));
+                //...
+                request.getRequestDispatcher("/WEB-INF/jsp/doctor_consultation_status.jsp").forward(request, response);
+                return;
+            }
+
+            // DAOを呼び出してデータベースを更新
+            ConsultationDAO consultationDao = new ConsultationDAO();
+            // 診察のステータスを「完了」にし、疾病コードを登録
+            boolean success = consultationDao.updateDiseaseAndStatus(consultationId, diseaseCode, "完了");
+
+            if (success) {
+                session.setAttribute("message_doctor_menu", "診察(ID: " + consultationId + ")を完了しました。");
+                response.sendRedirect("ReturnToMenuServlet");
+            } else {
+                request.setAttribute("formError_disease", "データベースの更新に失敗しました。");
+                // エラー時も同様に、状況確認画面を再表示するためのデータ準備が必要
+                request.getRequestDispatcher("/WEB-INF/jsp/doctor_consultation_status.jsp").forward(request, response);
+            }
+        }
+        // 他のPOSTアクションがあれば、ここに else if を追加
+    }
+
+
     // doPostメソッドは、新規指示の登録処理や、疾病名の登録処理などを今後実装
 }
