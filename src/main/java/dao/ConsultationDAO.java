@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import model.ConsultationBean; // ★新しく作成するBeanをインポート
 
 // DBManagerは同じパッケージにあるか、あるいは適宜importしてください
 
@@ -47,6 +48,37 @@ public class ConsultationDAO {
         }
         
         return newConsultationId;
+    }
+
+    /**
+     * ★追加: 指定された患者IDに紐づく、未完了の診察（疾病名がNULL）を探します。
+     * @param patientId 患者ID
+     * @return 未完了の診察情報を持つConsultationBean。見つからない場合はnull。
+     */
+    public ConsultationBean findIncompleteConsultationByPatientId(int patientId) {
+        ConsultationBean consultation = null;
+        // 疾病名がまだ登録されておらず、最も新しい診察レコードを1件取得する
+        String sql = "SELECT * FROM consultations WHERE patient_id = ? AND disease_code IS NULL ORDER BY consultation_date DESC, consultation_id DESC LIMIT 1";
+        
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, patientId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    consultation = new ConsultationBean();
+                    consultation.setConsultationId(rs.getInt("consultation_id"));
+                    consultation.setPatientId(rs.getInt("patient_id"));
+                    consultation.setDoctorId(rs.getInt("doctor_id"));
+                    consultation.setConsultationDate(rs.getDate("consultation_date"));
+                    consultation.setDiseaseCode(rs.getString("disease_code"));
+                    consultation.setStatus(rs.getString("status"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return consultation;
     }
 
     // 今後、診察情報を更新・取得するためのメソッドをここに追加していきます。
