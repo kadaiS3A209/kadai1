@@ -12,6 +12,8 @@ public class TreatmentBean implements Serializable {
     private int quantity;
     private String empId; // 処置を行った医師のID
     private Date treatmentDate;
+    private String medicineName;
+    private String unit;
 
     public TreatmentBean() {
     }
