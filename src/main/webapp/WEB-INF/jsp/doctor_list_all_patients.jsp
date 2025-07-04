@@ -75,7 +75,7 @@
                                 <td>
                                     <a href="DoctorDrugAdministrationServlet?action=start&patId=<c:out value='${patient.patId}'/>" class="action-button">薬剤投与指示</a>
 
- <a href="DoctorCreateConsultationServlet?patId=<c:out value='${patient.patId}'/>" class="action-button">診察開始</a>
+ <a href="DoctorConsultationServlet?patId=<c:out value='${patient.patId}'/>" class="action-button">診察開始</a>
                             <%-- 処置履歴確認へのリンク --%>
                             <a href="DoctorViewTreatmentHistoryServlet?patientIdForHistory=<c:out value='${patient.patId}'/>" class="action-button" style="background-color:#6c757d;">処置履歴</a>
                                 </td>
