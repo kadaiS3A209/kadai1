@@ -142,4 +142,65 @@ public class TreatmentDAO {
         }
         return historyList;
     }
+
+
+        /**
+     * ★追加: 特定の診察に紐づく処方（薬剤投与）を登録します。
+     * @param consultationId どの診察に紐づくか
+     * @param medicineId どの薬剤か
+     * @param quantity 量
+     * @return 成功した場合は true
+     */
+    public boolean addTreatment(int consultationId, String medicineId, int quantity) {
+        // treatmentid, patientid, empid, treatmentdate も登録
+        // consultation_idからpatientidとempid(doctor_id), treatmentdateを取得する必要がある
+        // ここでは簡略化し、必要な情報を引数で受け取る形とします。
+        String sql = "INSERT INTO treatment (consultation_id, patientid, empid, treatmentdate, medicineid, quantity) " + 
+                     "SELECT ?, patient_id, doctor_id, consultation_date, ?, ? FROM consultations WHERE consultation_id = ?";
+        
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, consultationId);
+            ps.setString(2, medicineId);
+            ps.setInt(3, quantity);
+            ps.setInt(4, consultationId); // WHERE句のパラメータ
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * ★追加: 特定の診察に紐づく処方リストを取得します。
+     * @param consultationId 診察ID
+     * @return 処方リスト
+     */
+    public List<TreatmentBean> getTreatmentsByConsultationId(int consultationId) {
+        List<TreatmentBean> list = new ArrayList<>();
+        // 薬剤名も表示するためJOIN
+        String sql = "SELECT t.*, m.medicinename, m.unit FROM treatment t " +
+                     "JOIN medicine m ON t.medicineid = m.medicineid " +
+                     "WHERE t.consultation_id = ?";
+        
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, consultationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TreatmentBean t = new TreatmentBean();
+                    // TreatmentBeanに必要なフィールド(medicineName, unitなど)を追加し、
+                    // ここでrsからセットする
+                    t.setTreatmentId(rs.getInt("treatmentid"));
+                    t.setMedicineName(rs.getString("medicinename"));
+                    t.setQuantity(rs.getInt("quantity"));
+                    t.setUnit(rs.getString("unit"));
+                    list.add(t);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
