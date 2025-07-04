@@ -22,31 +22,46 @@ public class LabResultRegisterServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String labTestOrderIdStr = request.getParameter("labTestOrderId");
-        int labTestOrderId = Integer.parseInt(labTestOrderIdStr);
-
-        LabTestOrderDAO dao = new LabTestOrderDAO();
-        // 指示に含まれる検査項目リストを取得
-        List<LabTestItemBean> items = dao.getLabTestItemsByOrderId(labTestOrderId);
-        
-        // ★各検査項目に、マスタデータから検査名などを補完する
-        for(LabTestItemBean item : items) {
-            // MasterDataManagerから検査コードに一致するマスタ情報を探す (このヘルパーメソッドはMasterDataManagerに要実装)
-            LabTestBean masterData = MasterDataManager.findLabTestByCode(item.getTestCode());
-            if (masterData != null) {
-                item.setTestName(masterData.getJlacTestName());
-                item.setSalesName(masterData.getSalesName());
-                item.setUnit(masterData.getUnit());
-                item.setReferenceValue(masterData.getReferenceValue());
-            }
-        }
-        
-        // 親オーダーの情報も取得して渡す（患者名など）
-        // (簡単のため、ここでは省略。必要ならLabTestOrderDAOにgetXxxメソッドを追加)
-        request.setAttribute("labTestOrderId", labTestOrderId);
-        request.setAttribute("testItems", items);
-        request.getRequestDispatcher("/WEB-INF/jsp/lab_result_register_form.jsp").forward(request, response);
+    String labTestOrderIdStr = request.getParameter("labTestOrderId");
+    if (labTestOrderIdStr == null || labTestOrderIdStr.isEmpty()) {
+        response.sendRedirect("LabOrderListServlet");
+        return;
     }
+    
+    int labTestOrderId = Integer.parseInt(labTestOrderIdStr);
+    LabTestOrderDAO dao = new LabTestOrderDAO();
+
+    // ★手順1: 親オーダーの情報（患者名など）を取得
+    Map<String, Object> parentOrderDetails = dao.getLabTestOrderParentDetails(labTestOrderId);
+    if (parentOrderDetails == null) {
+        // オーダーが見つからない場合のエラー処理
+        response.sendRedirect("LabOrderListServlet?error=orderNotFound");
+        return;
+    }
+    
+    // ★手順2: 指示に含まれる検査項目リスト（検査コードなど）を取得
+    List<LabTestItemBean> items = dao.getLabTestItemsByOrderId(labTestOrderId);
+    
+    // ★手順3: 各検査項目に、マスタデータから検査名などを補完する
+    for (LabTestItemBean item : items) {
+        LabTestBean masterData = MasterDataManager.findLabTestByCode(item.getTestCode());
+        if (masterData != null) {
+            item.setTestName(masterData.getJlacTestName());
+            item.setSalesName(masterData.getSalesName());
+            item.setUnit(masterData.getUnit());
+            item.setReferenceValue(masterData.getReferenceValue());
+        } else {
+            item.setTestName("不明な検査コード: " + item.getTestCode()); // マスタにない場合
+        }
+    }
+    
+    // JSPに渡すデータをリクエスト属性にセット
+    request.setAttribute("parentOrderDetails", parentOrderDetails);
+    request.setAttribute("testItems", items);
+    request.setAttribute("labTestOrderId", labTestOrderId);
+    
+    request.getRequestDispatcher("/WEB-INF/jsp/lab_result_register_form.jsp").forward(request, response);
+}
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
