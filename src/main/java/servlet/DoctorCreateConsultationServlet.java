@@ -16,6 +16,9 @@ import dao.ConsultationDAO;
 import dao.LabTestOrderDAO;
 import dao.PatientDAO;
 import dao.XrayOrderDAO;
+import java.sql.Connection; // ★追加
+import java.sql.SQLException; // ★追加
+import dao.DBManager; // ★追加
 
 @WebServlet("/DoctorCreateConsultationServlet")
 public class DoctorCreateConsultationServlet extends HttpServlet {
@@ -46,60 +49,76 @@ public class DoctorCreateConsultationServlet extends HttpServlet {
     /**
      * POSTリクエストは、診察と指示をデータベースに登録します。
      */
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
 
-        // セッションからログイン中の医師情報を取得
         EmployeeBean doctor = (EmployeeBean) session.getAttribute("loggedInUser");
         int doctorId = Integer.parseInt(doctor.getEmpid());
 
-        // フォームから送信されたデータを取得
         int patientId = Integer.parseInt(request.getParameter("patientId"));
         boolean xrayOrdered = "true".equals(request.getParameter("xrayOrder"));
         String[] selectedTestCodes = request.getParameterValues("testCodes");
 
-        // ★要件: レントゲンか検査のどちらかは必ず指示する
-        if (!xrayOrdered && (selectedTestCodes == null || selectedTestCodes.length == 0)) {
-            request.setAttribute("errorMessage_consultation", "レントゲン撮影または検査指示のいずれか、または両方を指示してください。");
-            // エラーメッセージと共にフォームを再表示するために、再度データをセット
-            PatientDAO patientDao = new PatientDAO();
-            request.setAttribute("patient", patientDao.getPatientById(String.valueOf(patientId)));
+        // ★要件: 「レントゲン撮影」「検査指示」が必ず付くものとする
+        if (!xrayOrdered || selectedTestCodes == null || selectedTestCodes.length == 0) {
+            request.setAttribute("errorMessage_consultation", "レントゲン撮影と、1つ以上の検査指示の両方が必須です。");
+            // エラーメッセージと共にフォームを再表示するために必要なデータを再セット
+            request.setAttribute("patient", new PatientDAO().getPatientById(String.valueOf(patientId)));
             request.setAttribute("labTestList", MasterDataManager.getAllLabTests());
             request.getRequestDispatcher("/WEB-INF/jsp/doctor_consultation_form.jsp").forward(request, response);
             return;
         }
 
-        // --- データベース登録処理 (トランザクションを考慮するのが理想) ---
-        ConsultationDAO consultationDao = new ConsultationDAO();
-        XrayOrderDAO xrayOrderDao = new XrayOrderDAO();
-        LabTestOrderDAO labTestOrderDao = new LabTestOrderDAO();
-        
-        // 1. 新しい診察レコードを作成
-        int newConsultationId = consultationDao.createConsultation(patientId, doctorId);
+        Connection con = null;
+        try {
+            con = DBManager.getConnection();
+            con.setAutoCommit(false); // ★トランザクション開始
 
-        if (newConsultationId != -1) { // 診察レコード作成成功
-            // 2. レントゲン指示があれば登録
-            if (xrayOrdered) {
-                xrayOrderDao.createXrayOrder(newConsultationId);
+            ConsultationDAO consultationDao = new ConsultationDAO();
+            XrayOrderDAO xrayOrderDao = new XrayOrderDAO();
+            LabTestOrderDAO labTestOrderDao = new LabTestOrderDAO();
+            
+            // 1. 新しい診察レコードを作成
+            int newConsultationId = consultationDao.createConsultation(patientId, doctorId, con);
+            if (newConsultationId == -1) throw new SQLException("診察レコードの作成に失敗しました。");
+
+            // 2. レントゲン指示を登録
+            if (!xrayOrderDao.createXrayOrder(newConsultationId, con)) {
+                throw new SQLException("レントゲン指示の作成に失敗しました。");
             }
-            // 3. 検査指示があれば登録
-            if (selectedTestCodes != null && selectedTestCodes.length > 0) {
-                int newLabTestOrderId = labTestOrderDao.createLabTestOrder(newConsultationId);
-                if (newLabTestOrderId != -1) {
-                    labTestOrderDao.createLabTestItems(newLabTestOrderId, selectedTestCodes);
-                }
+            
+            // 3. 検査指示を登録
+            int newLabTestOrderId = labTestOrderDao.createLabTestOrder(newConsultationId, con);
+            if (newLabTestOrderId == -1) throw new SQLException("検査指示の作成に失敗しました。");
+
+            // 4. 検査項目を登録
+            if (!labTestOrderDao.createLabTestItems(newLabTestOrderId, selectedTestCodes, con)) {
+                throw new SQLException("検査項目の作成に失敗しました。");
             }
-            // 成功したら医師メニューにリダイレクト（成功メッセージを添えて）
+
+            con.commit(); // ★全ての処理が成功したらコミット
             session.setAttribute("message_doctor_menu", "患者ID: " + patientId + " の指示を登録しました。");
             response.sendRedirect("ReturnToMenuServlet");
-        } else {
-            // 診察レコード作成失敗時のエラー処理
-            request.setAttribute("errorMessage_consultation", "診察の開始に失敗しました。データベースエラーの可能性があります。");
-            PatientDAO patientDao = new PatientDAO();
-            request.setAttribute("patient", patientDao.getPatientById(String.valueOf(patientId)));
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                if (con != null) con.rollback(); // ★エラーが発生したらロールバック
+            } catch (SQLException e2) {
+                e2.printStackTrace();
+            }
+            request.setAttribute("errorMessage_consultation", "指示の登録中にデータベースエラーが発生しました。");
+            request.setAttribute("patient", new PatientDAO().getPatientById(String.valueOf(patientId)));
             request.setAttribute("labTestList", MasterDataManager.getAllLabTests());
             request.getRequestDispatcher("/WEB-INF/jsp/doctor_consultation_form.jsp").forward(request, response);
+        } finally {
+            try {
+                if (con != null) con.setAutoCommit(true); // 自動コミットモードに戻す
+                if (con != null) con.close(); // コネクションを閉じる
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
