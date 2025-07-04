@@ -34,14 +34,16 @@
 
         <p>撮影した画像のファイル名を10個まで入力できます。</p>
 
-        <form action="RadiologyRegisterImageServlet" method="post">
+        <form action="RadiologyRegisterImageServlet" method="post" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<c:out value='${csrf_token}'/>">
             <input type="hidden" name="xrayOrderId" value="<c:out value='${orderDetails.xray_order_id}'/>">
             
+            <%-- ▼▼▼ inputのtypeを "text" から "file" に変更 ▼▼▼ --%>
+            <%-- multiple属性で複数ファイル選択を許可（ブラウザによる） --%>
             <c:forEach var="i" begin="1" end="10">
                 <div class="form-group">
                     <label for="fileName${i}">ファイル${i}:</label>
-                    <input type="text" id="fileName${i}" name="fileName" placeholder="例: image_<c:out value='${orderDetails.patient_id}'/>_${i}.jpg">
+                    <input type="file" id="fileName${i}" name="fileUpload">
                 </div>
             </c:forEach>
 
