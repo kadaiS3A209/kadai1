@@ -6,7 +6,17 @@
 <head>
 <meta charset="UTF-8">
 <title>臨床検査 結果登録</title>
-<style> /* 一覧画面などのスタイルを適用 */ </style>
+<style>
+    /* radiology_order_list.jsp と同じスタイルを適用 */
+    body { font-family: sans-serif; }
+    .container { width: 90%; margin: 20px auto; }
+    h1 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .action-button { padding: 5px 10px; background-color: #198754; color:white !important; text-decoration:none; border-radius:3px; }
+    .no-orders { text-align: center; color: #777; padding: 30px; font-size: 1.1em; }
+</style>
 </head>
 <body>
     <div class="container">
