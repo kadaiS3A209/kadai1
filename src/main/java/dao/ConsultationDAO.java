@@ -17,38 +17,31 @@ public class ConsultationDAO {
      * @param doctorId 診察を行う医師のID
      * @return 成功した場合は、新しく作成された診察ID (consultation_id)。失敗した場合は -1。
      */
-    public int createConsultation(int patientId, int doctorId) {
-        String sql = "INSERT INTO consultations (patient_id, doctor_id, consultation_date, status) VALUES (?, ?, CURDATE(), '指示待ち')";
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        int newConsultationId = -1;
+   public int createConsultation(int patientId, int doctorId, Connection con) throws SQLException {
+    String sql = "INSERT INTO consultations (patient_id, doctor_id, consultation_date, status) VALUES (?, ?, CURDATE(), '指示待ち')";
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+    int newConsultationId = -1;
 
-        try {
-            con = DBManager.getConnection();
-            // 第2引数に Statement.RETURN_GENERATED_KEYS を指定することで、自動採番されたIDを取得できる
-            ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-
-            ps.setInt(1, patientId);
-            ps.setInt(2, doctorId);
-
-            int result = ps.executeUpdate();
-
-            if (result > 0) {
-                // INSERT成功後、生成されたキー(ID)を取得
-                rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    newConsultationId = rs.getInt(1);
-                }
+    try {
+        // ★ DBManagerから直接取得するのではなく、渡されたconオブジェクトを使う
+        ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        ps.setInt(1, patientId);
+        ps.setInt(2, doctorId);
+        int result = ps.executeUpdate();
+        if (result > 0) {
+            rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                newConsultationId = rs.getInt(1);
             }
-        } catch (SQLException e) {
-            e.printStackTrace(); // エラーログを出力
-        } finally {
-            DBManager.close(con, ps, rs);
         }
-        
-        return newConsultationId;
+    } finally {
+        // ★ ここではConnectionを閉じない！サーブレット側で一括して閉じる
+        if (rs != null) rs.close();
+        if (ps != null) ps.close();
     }
+    return newConsultationId;
+}
 
     /**
      * ★追加: 指定された患者IDに紐づく、未完了の診察（疾病名がNULL）を探します。
