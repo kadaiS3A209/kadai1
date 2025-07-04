@@ -94,6 +94,39 @@ public class LabTestOrderDAO {
         }
         return result;
     }
+
+    /**
+     * ★追加: 未完了の臨床検査指示を全て取得します。
+     * 患者名も一緒に取得するために、テーブルを結合(JOIN)します。
+     * @return 未完了の検査指示リスト (各指示は情報を格納したMap)
+     */
+    public List<Map<String, Object>> getPendingLabTestOrders() {
+        List<Map<String, Object>> orderList = new ArrayList<>();
+        // lab_test_orders, consultations, patients の3つのテーブルを結合
+        String sql = "SELECT lto.lab_test_order_id, lto.ordered_at, p.patid, p.patlname, p.patfname " +
+                     "FROM lab_test_orders lto " +
+                     "JOIN consultations c ON lto.consultation_id = c.consultation_id " +
+                     "JOIN patients p ON c.patient_id = p.patid " +
+                     "WHERE lto.order_status = '指示済み' OR lto.order_status = '一部完了' " +
+                     "ORDER BY lto.ordered_at ASC"; // 指示が古い順に表示
+
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, Object> order = new HashMap<>();
+                order.put("lab_test_order_id", rs.getInt("lab_test_order_id"));
+                order.put("ordered_at", rs.getTimestamp("ordered_at"));
+                order.put("patient_id", rs.getString("patid"));
+                order.put("patient_name", rs.getString("patlname") + " " + rs.getString("patfname"));
+                orderList.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderList;
+    }
     
     // 今後、臨床検査技師が指示一覧を取得するためのメソッドなどをここに追加していきます。
 }
