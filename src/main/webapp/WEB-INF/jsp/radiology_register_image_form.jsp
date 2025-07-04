@@ -43,7 +43,7 @@
             <c:forEach var="i" begin="1" end="10">
                 <div class="form-group">
                     <label for="fileName${i}">ファイル${i}:</label>
-                    <input type="file" id="fileName${i}" name="fileUpload">
+                    <input type="file" id="fileName${i}" name="fileUpload" accept="image/*">
                 </div>
             </c:forEach>
 
