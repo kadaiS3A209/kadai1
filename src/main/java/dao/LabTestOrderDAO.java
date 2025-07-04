@@ -209,6 +209,38 @@ public class LabTestOrderDAO {
             e.printStackTrace();
         }
     }
+
+    /**
+     * ★★★ このメソッドを追加します ★★★
+     * 特定の検査指示IDに紐づく親情報（患者IDと患者名）を取得します。
+     * @param labTestOrderId 詳細を取得したい検査指示のID
+     * @return 患者ID、患者名を含むMapオブジェクト。見つからなければnull。
+     */
+    public Map<String, Object> getLabTestOrderParentDetails(int labTestOrderId) {
+        Map<String, Object> orderDetails = null;
+        // lab_test_orders, consultations, patients の3つのテーブルを結合
+        String sql = "SELECT p.patid, p.patlname, p.patfname " +
+                     "FROM lab_test_orders lto " +
+                     "JOIN consultations c ON lto.consultation_id = c.consultation_id " +
+                     "JOIN patients p ON c.patient_id = p.patid " +
+                     "WHERE lto.lab_test_order_id = ?";
+
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, labTestOrderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    orderDetails = new HashMap<>();
+                    orderDetails.put("patient_id", rs.getString("patid"));
+                    orderDetails.put("patient_name", rs.getString("patlname") + " " + rs.getString("patfname"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderDetails;
+    }
     
     
     // 今後、臨床検査技師が指示一覧を取得するためのメソッドなどをここに追加していきます。
