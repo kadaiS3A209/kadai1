@@ -205,6 +205,34 @@ public class LabTestOrderDAO {
         }
         return orderDetails;
     }
+
+    /**
+     * ★追加: consultation_id を使って親となる検査指示情報を取得します。
+     * @param consultationId 診察ID
+     * @return LabTestOrderBean オブジェクト。見つからなければnull。
+     */
+    public LabTestOrderBean findParentOrderByConsultationId(int consultationId) {
+        LabTestOrderBean order = null;
+        String sql = "SELECT * FROM lab_test_orders WHERE consultation_id = ?";
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, consultationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    order = new LabTestOrderBean();
+                    order.setLabTestOrderId(rs.getInt("lab_test_order_id"));
+                    order.setConsultationId(rs.getInt("consultation_id"));
+                    order.setOrderStatus(rs.getString("order_status"));
+                    order.setTechnicianId(rs.getObject("technician_id", Integer.class));
+                    order.setOrderedAt(rs.getTimestamp("ordered_at"));
+                    order.setCompletedAt(rs.getTimestamp("completed_at"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return order;
+    }
     
     
     // 今後、臨床検査技師が指示一覧を取得するためのメソッドなどをここに追加していきます。
