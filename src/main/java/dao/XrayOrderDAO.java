@@ -167,6 +167,96 @@ public class XrayOrderDAO {
         return orderList;
     }
 
+    /**
+     * ★追加: 特定のレントゲン指示IDに紐づく詳細情報（特に患者名）を取得します。
+     * @param xrayOrderId 詳細を取得したいレントゲン指示のID
+     * @return 指示ID、患者ID、患者名を含むMapオブジェクト。見つからなければnull。
+     */
+    public Map<String, Object> getXrayOrderDetailsById(int xrayOrderId) {
+        Map<String, Object> orderDetails = null;
+        String sql = "SELECT xo.xray_order_id, p.patid, p.patlname, p.patfname " +
+                     "FROM xray_orders xo " +
+                     "JOIN consultations c ON xo.consultation_id = c.consultation_id " +
+                     "JOIN patients p ON c.patient_id = p.patid " +
+                     "WHERE xo.xray_order_id = ?";
+        
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, xrayOrderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    orderDetails = new HashMap<>();
+                    orderDetails.put("xray_order_id", rs.getInt("xray_order_id"));
+                    orderDetails.put("patient_id", rs.getString("patid"));
+                    orderDetails.put("patient_name", rs.getString("patlname") + " " + rs.getString("patfname"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orderDetails;
+    }
+
+    /**
+     * ★追加: レントゲン画像のファイル名を登録し、指示を「撮影完了」に更新します。
+     * @param xrayOrderId 対象のレントゲン指示ID
+     * @param technicianId 担当したレントゲン技師のID
+     * @param fileNames 登録するファイル名のリスト（空でないリスト）
+     * @return 成功した場合は true
+     */
+    public boolean completeXrayOrder(int xrayOrderId, int technicianId, List<String> fileNames) {
+        Connection con = null;
+        PreparedStatement psUpdate = null;
+        PreparedStatement psInsert = null;
+        boolean result = false;
+
+        String sqlUpdate = "UPDATE xray_orders SET order_status = '撮影完了', technician_id = ?, completed_at = NOW() WHERE xray_order_id = ?";
+        String sqlInsert = "INSERT INTO xray_images (xray_order_id, file_name) VALUES (?, ?)";
+
+        try {
+            con = DBManager.getConnection();
+            con.setAutoCommit(false); // トランザクション開始
+
+            // 1. xray_orders テーブルのステータスを更新
+            psUpdate = con.prepareStatement(sqlUpdate);
+            psUpdate.setInt(1, technicianId);
+            psUpdate.setInt(2, xrayOrderId);
+            psUpdate.executeUpdate();
+
+            // 2. xray_images テーブルにファイル名を複数登録
+            psInsert = con.prepareStatement(sqlInsert);
+            for (String fileName : fileNames) {
+                if (fileName != null && !fileName.trim().isEmpty()) {
+                    psInsert.setInt(1, xrayOrderId);
+                    psInsert.setString(2, fileName.trim());
+                    psInsert.addBatch();
+                }
+            }
+            psInsert.executeBatch();
+            
+            con.commit(); // 全て成功したらコミット
+            result = true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                if (con != null) con.rollback(); // エラー時はロールバック
+            } catch (SQLException e2) {
+                e2.printStackTrace();
+            }
+        } finally {
+            try {
+                if (con != null) con.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            DBManager.close(con, psUpdate, null);
+            DBManager.close(null, psInsert, null);
+        }
+        return result;
+    }
+
 
 
 }
