@@ -133,4 +133,23 @@ public class MasterDataManager implements ServletContextListener {
         }
         return list;
     }
+
+    /**
+     * ★★★ このメソッドを追加します ★★★
+     * 検査コードを指定して、対応する検査マスタ情報を取得します。
+     * @param code 検索するJLAC11コード
+     * @return 条件に一致するLabTestBean。見つからない場合はnull。
+     */
+    public static LabTestBean findLabTestByCode(String code) {
+        if (code == null || code.isEmpty()) {
+            return null;
+        }
+        // メモリ上のリストをループして、コードが一致するものを探す
+        for (LabTestBean test : labTestMaster) {
+            if (code.equals(test.getJlac11Code())) {
+                return test;
+            }
+        }
+        return null; // 見つからなかった場合
+    }
 }
