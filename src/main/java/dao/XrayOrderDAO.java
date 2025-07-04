@@ -134,5 +134,39 @@ public class XrayOrderDAO {
     }
 
 
+    /**
+     * 未完了のレントゲン指示を全て取得します。
+     * 患者名も一緒に取得するために、テーブルを結合(JOIN)します。
+     * @return 未完了のレントゲン指示リスト (各指示は情報を格納したMap)
+     */
+    public List<Map<String, Object>> getPendingXrayOrders() {
+        List<Map<String, Object>> orderList = new ArrayList<>();
+        // xray_orders, consultations, patients の3つのテーブルを結合
+        String sql = "SELECT xo.xray_order_id, xo.ordered_at, p.patid, p.patlname, p.patfname " +
+                     "FROM xray_orders xo " +
+                     "JOIN consultations c ON xo.consultation_id = c.consultation_id " +
+                     "JOIN patients p ON c.patient_id = p.patid " +
+                     "WHERE xo.order_status = '指示済み' " +
+                     "ORDER BY xo.ordered_at ASC"; // 指示が古い順に表示
+
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, Object> order = new HashMap<>();
+                order.put("xray_order_id", rs.getInt("xray_order_id"));
+                order.put("ordered_at", rs.getTimestamp("ordered_at"));
+                order.put("patient_id", rs.getString("patid"));
+                order.put("patient_name", rs.getString("patlname") + " " + rs.getString("patfname"));
+                orderList.add(order);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // エラーログを出力
+        }
+        return orderList;
+    }
+
+
 
 }
