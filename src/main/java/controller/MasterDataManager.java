@@ -169,6 +169,26 @@ public class MasterDataManager implements ServletContextListener {
         return null; // 見つからなかった場合
     }
 
+    /**
+     * 疾病コードを指定して、対応する疾病マスタ情報を取得します。
+     * @param code 検索する疾病コード
+     * @return 条件に一致するDiseaseBean。見つからない場合はnull。
+     */
+    public static DiseaseBean findDiseaseByCode(String code) {
+        // コードがnullまたは空の場合は、すぐにnullを返す
+        if (code == null || code.isEmpty()) {
+            return null;
+        }
+
+        // メモリ上の疾病マスタリストから、コードが一致する最初の要素を探す
+        // Java Stream API を使うと、簡潔に記述できる
+        return diseaseMaster.stream()
+                .filter(disease -> code.equals(disease.getCode()))
+                .findFirst()
+                .orElse(null); // 見つからなかった場合はnullを返す
+    }
+
+
 }
 
 
