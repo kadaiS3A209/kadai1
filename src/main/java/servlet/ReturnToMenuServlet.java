@@ -36,6 +36,12 @@ public class ReturnToMenuServlet extends HttpServlet {
             	case 2: // 医師
             		request.getRequestDispatcher("/WEB-INF/jsp/menu_doctor.jsp").forward(request, response);
                     break;
+            	case 4: // レントゲン技師
+                	request.getRequestDispatcher("/WEB-INF/jsp/menu_radiology_technician.jsp").forward(request, response);
+                    break;
+                case 5: // 臨床検査技師
+                	request.getRequestDispatcher("/WEB-INF/jsp/menu_lab_technician.jsp").forward(request, response);
+                    break;
                 default:
                     // 不明なロール、または予期せぬ状態
                     session.invalidate(); // セッションを無効化
