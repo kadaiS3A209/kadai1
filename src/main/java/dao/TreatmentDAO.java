@@ -203,4 +203,82 @@ public class TreatmentDAO {
         }
         return list;
     }
+
+package dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import model.TreatmentBean;
+
+public class TreatmentDAO {
+
+    /**
+     * ★追加: 特定の診察に紐づく処方（薬剤投与）を登録します。
+     * @param consultationId どの診察に紐づくか
+     * @param medicineId どの薬剤か
+     * @param quantity 量
+     * @return 成功した場合は true
+     */
+    public boolean addTreatment(int consultationId, String medicineId, int quantity) {
+        // treatmentテーブルに、consultation_idを使って関連情報を登録するSQL
+        String sql = "INSERT INTO treatment (consultation_id, patientid, empid, treatmentdate, medicineid, quantity) " +
+                     "SELECT ?, c.patient_id, c.doctor_id, c.consultation_date, ?, ? " +
+                     "FROM consultations c WHERE c.consultation_id = ?";
+        
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, consultationId);
+            ps.setString(2, medicineId);
+            ps.setInt(3, quantity);
+            ps.setInt(4, consultationId); // WHERE句用のパラメータ
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * ★追加: 特定の診察に紐づく処方リストを取得します。
+     * @param consultationId 診察ID
+     * @return 処方リスト (TreatmentBean)
+     */
+    public List<TreatmentBean> getTreatmentsByConsultationId(int consultationId) {
+        List<TreatmentBean> list = new ArrayList<>();
+        // 薬剤名も表示するためmedicinesテーブルとJOIN
+        String sql = "SELECT t.*, m.medicinename, m.unit " +
+                     "FROM treatment t JOIN medicines m ON t.medicineid = m.medicineid " +
+                     "WHERE t.consultation_id = ?";
+        
+        try (Connection con = DBManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, consultationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TreatmentBean t = new TreatmentBean();
+                    t.setTreatmentId(rs.getInt("treatmentid"));
+                    t.setMedicineId(rs.getString("medicineid"));
+                    t.setQuantity(rs.getInt("quantity"));
+                    // BeanにmedicineNameとunitのフィールドを追加し、ここでセット
+                    t.setMedicineName(rs.getString("medicinename"));
+                    t.setUnit(rs.getString("unit"));
+                    list.add(t);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+}
+
+
+
 }
